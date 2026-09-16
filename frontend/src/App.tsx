@@ -13,6 +13,7 @@ import { IoTSensorsModal } from './components/IoTSensorsModal';
 import { AlertsAuditModal } from './components/AlertsAuditModal';
 import { RiverCascadeModal } from './components/RiverCascadeModal';
 import { CAPModal } from './components/CAPModal';
+import { ExportDataModal } from './components/ExportDataModal';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { alertBroadcaster } from './utils/audioAlert';
 import {
@@ -48,6 +49,7 @@ export const App: React.FC = () => {
   const [isAlertsAuditOpen, setIsAlertsAuditOpen] = useState(false);
   const [isRiverCascadeOpen, setIsRiverCascadeOpen] = useState(false);
   const [isCAPOpen, setIsCAPOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [showSandbox, setShowSandbox] = useState(false);
@@ -134,6 +136,7 @@ export const App: React.FC = () => {
         setIsAlertsAuditOpen(false);
         setIsRiverCascadeOpen(false);
         setIsCAPOpen(false);
+        setIsExportOpen(false);
         setIsShortcutsOpen(false);
       }
     };
@@ -399,6 +402,7 @@ export const App: React.FC = () => {
         onOpenAlertsAudit={() => setIsAlertsAuditOpen(true)}
         onOpenRiverCascade={() => setIsRiverCascadeOpen(true)}
         onOpenCAP={() => setIsCAPOpen(true)}
+        onOpenExport={() => setIsExportOpen(true)}
         activeSensorsCount={sensors.length || 4}
         isHighContrast={isHighContrast}
         onToggleHighContrast={handleToggleHighContrast}
@@ -569,6 +573,13 @@ export const App: React.FC = () => {
       <CAPModal
         isOpen={isCAPOpen}
         onClose={() => setIsCAPOpen(false)}
+      />
+
+      <ExportDataModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        wards={wards}
+        geoJsonData={geoJsonData}
       />
 
       <SearchPalette

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { WardRisk, ValidationEvent, SensorNode } from '../types';
-import { Layers, Compass, Eye, Mountain, Radio } from 'lucide-react';
+import { Layers, Compass, Eye, Mountain, Radio, Waves } from 'lucide-react';
 
 interface MapProps {
   wards: WardRisk[];
@@ -13,6 +13,64 @@ interface MapProps {
 }
 
 type MapLayerType = 'satellite' | 'dark' | 'topo';
+
+// Topological River Catchment Vectors for Himachal Pradesh
+const RIVER_CASCADES = [
+  {
+    id: 'beas_mainstem',
+    name: 'Beas River Mainstem',
+    color: '#38bdf8',
+    coords: [
+      [32.2396, 77.1887], // Manali (2050m)
+      [31.9578, 77.1095], // Kullu Valley (1220m)
+      [31.8790, 77.1520], // Bhuntar Confluence
+      [31.7190, 77.2280], // Larji Dam Confluence
+      [31.6703, 77.0542], // Pandoh Dam (850m)
+      [31.7087, 76.9320], // Mandi Sadar (760m)
+      [31.8150, 76.7820]  // Dharampur (680m)
+    ] as [number, number][],
+    velocity: '4.8 m/s',
+    gradient: '24 m/km',
+    stations: [
+      { name: 'Manali Headwater Gauge', lat: 32.2396, lng: 77.1887, elev: 2050, type: 'Headwater' },
+      { name: 'Kullu Valley Station', lat: 31.9578, lng: 77.1095, elev: 1220, type: 'Valley Floor' },
+      { name: 'Pandoh Gorge Dam', lat: 31.6703, lng: 77.0542, elev: 850, type: 'Hydro Dam' },
+      { name: 'Mandi Victoria Bridge', lat: 31.7087, lng: 76.9320, elev: 760, type: 'Gorge Choke' }
+    ]
+  },
+  {
+    id: 'parbati_tributary',
+    name: 'Parbati River Tributary',
+    color: '#a78bfa',
+    coords: [
+      [32.0270, 77.3510], // Manikaran (1760m)
+      [32.0100, 77.3150], // Kasol (1580m)
+      [31.8790, 77.1520]  // Bhuntar Confluence (1080m)
+    ] as [number, number][],
+    velocity: '5.6 m/s',
+    gradient: '38 m/km',
+    stations: [
+      { name: 'Manikaran Gorge', lat: 32.0270, lng: 77.3510, elev: 1760, type: 'V-Notch Valley' },
+      { name: 'Kasol Bridge Confluence', lat: 32.0100, lng: 77.3150, elev: 1580, type: 'Rapid Confluence' }
+    ]
+  },
+  {
+    id: 'tirthan_tributary',
+    name: 'Tirthan River Tributary',
+    color: '#34d399',
+    coords: [
+      [31.6360, 77.4080], // Gushaini (1500m)
+      [31.6380, 77.3450], // Banjar (1350m)
+      [31.7190, 77.2280]  // Larji Confluence (950m)
+    ] as [number, number][],
+    velocity: '4.2 m/s',
+    gradient: '32 m/km',
+    stations: [
+      { name: 'Gushaini Catchment', lat: 31.6360, lng: 77.4080, elev: 1500, type: 'Steep Basin' },
+      { name: 'Banjar Valley Station', lat: 31.6380, lng: 77.3450, elev: 1350, type: 'Tehsil Basin' }
+    ]
+  }
+];
 
 export const MapChoropleth: React.FC<MapProps> = ({
   wards,
@@ -28,10 +86,12 @@ export const MapChoropleth: React.FC<MapProps> = ({
   const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const sensorsLayerRef = useRef<L.LayerGroup | null>(null);
+  const riversLayerRef = useRef<L.LayerGroup | null>(null);
 
   const [activeLayer, setActiveLayer] = useState<MapLayerType>('satellite');
   const [showEvents, setShowEvents] = useState<boolean>(true);
   const [showSensors, setShowSensors] = useState<boolean>(true);
+  const [showRivers, setShowRivers] = useState<boolean>(true);
 
   // Tile layers definition (100% Free, Zero API Key / Billing Cost)
   const TILE_LAYERS = {
@@ -74,6 +134,7 @@ export const MapChoropleth: React.FC<MapProps> = ({
 
     markersLayerRef.current = L.layerGroup().addTo(map);
     sensorsLayerRef.current = L.layerGroup().addTo(map);
+    riversLayerRef.current = L.layerGroup().addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -213,9 +274,7 @@ export const MapChoropleth: React.FC<MapProps> = ({
     });
   }, [validationEvents, wards, showEvents]);
 
-
-
-  // 6. Update IoT Field Sensors Layer
+  // 5. Update IoT Field Sensors Layer
   useEffect(() => {
     const sensorsGroup = sensorsLayerRef.current;
     if (!sensorsGroup) return;
@@ -248,15 +307,28 @@ export const MapChoropleth: React.FC<MapProps> = ({
           <span class="px-2 py-0.5 rounded text-[10px] font-mono ${isSurge ? 'bg-red-950 text-red-300 border border-red-800' : 'bg-cyan-950 text-cyan-300 border border-cyan-800'} font-bold">
             ${isSurge ? 'SURGE ANOMALY DETECTED' : 'IOT RIVER GAUGE ACTIVE'}
           </span>
-          <h4 class="font-bold text-white text-sm mt-1.5">${node.node_name}</h4>
-          <div class="text-cyan-300 font-mono text-[11px] mt-0.5">Catchment: <strong>${node.river_name}</strong></div>
-          <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-700/80 font-mono text-[11px]">
-            <div>Stage: <strong class="${isSurge ? 'text-red-400' : 'text-white'}">${node.water_level_cm} cm</strong></div>
-            <div>Rise: <strong class="text-amber-400">+${node.water_level_rate_cm_per_hr} cm/h</strong></div>
-            <div>Tilt: <strong>${node.tilt_angle_deg}°</strong></div>
-            <div>Battery: <strong class="text-emerald-400">${node.battery_level_pct}%</strong></div>
+          <h4 class="font-bold text-slate-100 text-sm mt-1.5">${node.node_id}</h4>
+          <div class="text-slate-400 text-[11px] font-mono">${node.node_name} (${node.river_name}) • Ward: ${node.ward_id}</div>
+          
+          <div class="grid grid-cols-2 gap-2 mt-2 font-mono text-[11px] bg-slate-900/70 p-2 rounded border border-slate-800">
+            <div>
+              <span class="text-slate-400 text-[10px] block">WATER STAGE</span>
+              <strong class="${isSurge ? 'text-red-400' : 'text-cyan-400'} text-xs">${node.water_level_cm.toFixed(1)} cm</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] block">SURGE RATE</span>
+              <strong class="text-white text-xs">${node.water_level_rate_cm_per_hr.toFixed(1)} cm/h</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] block">TILT SENSOR</span>
+              <strong class="${node.tilt_angle_deg > 5.0 ? 'text-amber-400' : 'text-slate-300'} text-xs">${node.tilt_angle_deg.toFixed(1)}°</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] block">BATTERY</span>
+              <strong class="text-emerald-400 text-xs">${node.battery_level_pct.toFixed(0)}%</strong>
+            </div>
           </div>
-          <div class="text-[10px] text-slate-400 mt-2">Assigned Ward: ${node.ward_name}</div>
+          <div class="mt-2 text-[10px] text-slate-400 font-mono">Telemetry stream: LoRaWAN 868MHz Gateway (SX1276)</div>
         </div>`,
         { className: 'tactical-popup' }
       );
@@ -265,21 +337,109 @@ export const MapChoropleth: React.FC<MapProps> = ({
     });
   }, [sensors, showSensors]);
 
+  // 6. Update River Cascades & Catchment Vectors Layer
+  useEffect(() => {
+    const riversGroup = riversLayerRef.current;
+    if (!riversGroup) return;
 
+    riversGroup.clearLayers();
+    if (!showRivers) return;
+
+    RIVER_CASCADES.forEach(river => {
+      // Glow background line
+      const glowLine = L.polyline(river.coords, {
+        color: river.color,
+        weight: 6,
+        opacity: 0.35,
+        lineCap: 'round',
+        lineJoin: 'round'
+      });
+
+      // Core crisp vector line with arrow dashes
+      const coreLine = L.polyline(river.coords, {
+        color: river.color,
+        weight: 3,
+        opacity: 0.9,
+        dashArray: '10, 6',
+        lineCap: 'round'
+      });
+
+      const popupContent = `
+        <div class="p-2.5 font-sans max-w-xs text-xs">
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold uppercase">
+            Hydrological River Cascade
+          </span>
+          <h4 class="font-bold text-slate-100 text-sm mt-1" style="color: ${river.color}">${river.name}</h4>
+          <div class="grid grid-cols-2 gap-2 mt-2 font-mono text-[11px] bg-slate-900/80 p-2 rounded border border-slate-800">
+            <div>
+              <span class="text-slate-400 text-[10px] block">SURGE VELOCITY</span>
+              <strong class="text-white text-xs">${river.velocity}</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[10px] block">AVG GRADIENT</span>
+              <strong class="text-white text-xs">${river.gradient}</strong>
+            </div>
+          </div>
+          <p class="text-slate-300 text-[11px] mt-2">
+            Downstream Manning propagation channel. Cloudbursts at headwaters transit downstream within 1.5 to 4.5 hours.
+          </p>
+        </div>
+      `;
+
+      coreLine.bindPopup(popupContent, { className: 'tactical-popup' });
+      coreLine.bindTooltip(`<strong>${river.name}</strong> (${river.velocity})`, { sticky: true, className: 'tactical-tooltip' });
+
+      riversGroup.addLayer(glowLine);
+      riversGroup.addLayer(coreLine);
+
+      // Add Station Confluence Markers
+      river.stations.forEach(st => {
+        const stationIcon = L.divIcon({
+          className: 'custom-river-station',
+          html: `<div class="w-3.5 h-3.5 rounded-full bg-slate-950 border-2 shadow-md flex items-center justify-center cursor-pointer" style="border-color: ${river.color}; box-shadow: 0 0 8px ${river.color};">
+                   <div class="w-1.5 h-1.5 rounded-full" style="background-color: ${river.color}"></div>
+                 </div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        });
+
+        const stMarker = L.marker([st.lat, st.lng], { icon: stationIcon });
+        stMarker.bindTooltip(
+          `<div class="font-sans text-xs">
+            <strong>${st.name}</strong> (${st.elev}m)
+            <div class="text-[10px] text-slate-400 font-mono">${st.type} • ${river.name}</div>
+          </div>`,
+          { sticky: true, className: 'tactical-tooltip' }
+        );
+        riversGroup.addLayer(stMarker);
+      });
+    });
+  }, [showRivers]);
+
+  // 7. Auto-pan to selected ward
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !selectedWard) return;
+
+    map.flyTo([selectedWard.latitude, selectedWard.longitude], 11, {
+      duration: 1.2,
+      easeLinearity: 0.25
+    });
+  }, [selectedWard?.ward_id]);
 
   return (
-    <div
-      role="region"
-      aria-label="Interactive Tactical Flash Flood Risk Map"
-      className="relative w-full h-[540px] rounded-xl overflow-hidden border border-tactical-border shadow-2xl bg-tactical-bg focus-within:ring-2 focus-within:ring-cyan-500"
-    >
+    <div className="relative w-full h-[580px] rounded-xl overflow-hidden border border-tactical-border shadow-2xl bg-slate-950">
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 
-      {/* Floating Tactical Layer Switcher Controls */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-2 pointer-events-auto">
-        {/* Layer Selector Pill */}
-        <div className="bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-1 flex items-center space-x-1 shadow-xl">
+      {/* Floating Controls Overlay (Top Right) */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col items-end space-y-2 pointer-events-auto">
+        {/* Layer Switcher (Satellite, Dark, Topo) */}
+        <div
+          role="group"
+          aria-label="Map Base Layer Switcher"
+          className="bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-1 flex items-center space-x-1 shadow-xl"
+        >
           <button
             onClick={() => handleLayerSwitch('satellite')}
             className={`px-2.5 py-1.5 rounded-md text-xs font-mono flex items-center space-x-1.5 transition-all ${
@@ -323,8 +483,19 @@ export const MapChoropleth: React.FC<MapProps> = ({
           </button>
         </div>
 
-        {/* Feature Toggles (Sensors, Events) */}
+        {/* Feature Toggles (Rivers, Sensors, Events) */}
         <div className="bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-2 flex items-center space-x-3 text-xs font-mono shadow-xl flex-wrap gap-y-1">
+          <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
+            <input
+              type="checkbox"
+              checked={showRivers}
+              onChange={(e) => setShowRivers(e.target.checked)}
+              className="accent-cyan-400 rounded cursor-pointer"
+            />
+            <Waves className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Rivers (3)</span>
+          </label>
+
           <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
             <input
               type="checkbox"
@@ -351,7 +522,7 @@ export const MapChoropleth: React.FC<MapProps> = ({
 
       {/* Map Tactical Legend */}
       <div
-        className="absolute bottom-4 left-4 z-20 bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-3 text-xs font-mono shadow-lg pointer-events-auto max-w-[290px]"
+        className="absolute bottom-4 left-4 z-20 bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-3 text-xs font-mono shadow-lg pointer-events-auto max-w-[310px]"
         role="complementary"
         aria-label="Risk classification legend"
       >
@@ -381,10 +552,21 @@ export const MapChoropleth: React.FC<MapProps> = ({
         <div className="mt-2.5 pt-2 border-t border-slate-700/80 space-y-1 text-[10px] text-slate-300">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1 text-cyan-300 font-semibold">
-              <span className="text-cyan-400">⚡</span> IoT Sonar River Gauge
+              <span className="text-cyan-400">⚡</span> IoT Sonar Gauge
             </span>
             <span className="flex items-center gap-1 text-red-400 font-semibold">
               <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-ping" /> 2025 Disaster Event
+            </span>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <span className="flex items-center gap-1 text-cyan-300">
+              <span className="w-3 h-0.5 bg-[#38bdf8] inline-block" /> Beas
+            </span>
+            <span className="flex items-center gap-1 text-purple-300">
+              <span className="w-3 h-0.5 bg-[#a78bfa] inline-block" /> Parbati
+            </span>
+            <span className="flex items-center gap-1 text-emerald-300">
+              <span className="w-3 h-0.5 bg-[#34d399] inline-block" /> Tirthan
             </span>
           </div>
         </div>

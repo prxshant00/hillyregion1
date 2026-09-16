@@ -15,7 +15,8 @@ import {
   Rss,
   Eye,
   Type,
-  HelpCircle
+  HelpCircle,
+  Download
 } from 'lucide-react';
 import { alertBroadcaster } from '../utils/audioAlert';
 
@@ -28,6 +29,7 @@ interface HeaderProps {
   onOpenAlertsAudit: () => void;
   onOpenRiverCascade: () => void;
   onOpenCAP: () => void;
+  onOpenExport: () => void;
   activeSensorsCount: number;
   isHighContrast: boolean;
   onToggleHighContrast: () => void;
@@ -45,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAlertsAudit,
   onOpenRiverCascade,
   onOpenCAP,
+  onOpenExport,
   activeSensorsCount,
   isHighContrast,
   onToggleHighContrast,
@@ -153,6 +156,17 @@ export const Header: React.FC<HeaderProps> = ({
             <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
             <span className="hidden lg:inline">NDRF SITREP</span>
             <span className="lg:hidden">SITREP</span>
+          </button>
+
+          {/* Data Export Center Button */}
+          <button
+            onClick={onOpenExport}
+            className="flex items-center space-x-1.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-cyan-400"
+            title="Export Spatial GeoJSON, Tabular CSV, and NDMA CAP XML"
+            aria-label="Export Data and Intelligence"
+          >
+            <Download className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
+            <span className="hidden lg:inline">Export</span>
           </button>
 
           {/* Alert Dispatch Log Button */}
