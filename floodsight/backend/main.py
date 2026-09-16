@@ -86,6 +86,18 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
+# OWASP Secure Headers Middleware (security-scanning-security-hardening)
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    return response
+
+
 # Centralized exception handler: Prevent leaking raw tracebacks
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
