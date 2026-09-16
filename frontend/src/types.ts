@@ -1,0 +1,185 @@
+export interface FactorContribution {
+  factor_name: string;
+  display_name: string;
+  impact_points: number;
+  is_aggravating: boolean;
+}
+
+export interface WardRisk {
+  ward_id: string;
+  ward_name: string;
+  district_name: string;
+  latitude: number;
+  longitude: number;
+  risk_score: number;
+  alert_level: 'NORMAL' | 'ADVISORY' | 'WATCH' | 'WARNING';
+  alert_color: string;
+  lead_time_hours: number;
+  rainfall_current_24h: number;
+  rainfall_antecedent_72h: number;
+  is_live_data: boolean;
+  last_updated: string;
+  severity_label?: string;
+  factor_contributions?: FactorContribution[];
+  features_summary?: Record<string, any>;
+  live_sensor_telemetry?: {
+    node_id: string;
+    source: string;
+    timestamp: string;
+    water_level_cm: number;
+    water_level_rate_cm_per_hr?: number;
+    tilt_angle_deg?: number;
+    battery_level_pct?: number;
+  } | null;
+}
+
+export interface TimeSeriesPoint {
+  timestamp: string;
+  rainfall_mm: number;
+  risk_score: number;
+  water_level_cm?: number;
+}
+
+export interface ValidationEvent {
+  event_id: string;
+  date: string;
+  district: string;
+  ward_id: string;
+  location: string;
+  event_type: string;
+  description: string;
+  rainfall_24h_mm: number;
+  antecedent_72h_mm: number;
+  flood_occurred: number;
+  severity: string;
+  documented_source: string;
+  model_predicted_risk: number;
+  model_predicted_level: string;
+  prediction_accurate: boolean;
+}
+
+export interface ModelInfo {
+  model_name: string;
+  model_version: string;
+  trained_at: string;
+  algorithm: string;
+  features: string[];
+  feature_importances: Record<string, number>;
+  literature_benchmark: {
+    study_name: string;
+    citation: string;
+    reported_accuracy: number;
+    reported_roc_auc: number;
+    context: string;
+  };
+  measured_validation_metrics: {
+    evaluation_window: string;
+    validation_wards_count: number;
+    test_samples_count: number;
+    positive_events_count: number;
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+    roc_auc: number;
+    pr_auc: number;
+    true_positives: number;
+    false_positives: number;
+    true_negatives: number;
+    false_negatives: number;
+  };
+  disclaimer: string;
+}
+
+export interface EvacuationShelter {
+  shelter_id: string;
+  shelter_name: string;
+  district_name: string;
+  ward_id: string;
+  ward_name: string;
+  latitude: number;
+  longitude: number;
+  elevation_m: number;
+  capacity_persons: number;
+  current_occupancy: number;
+  supplies_status: 'STOCKED' | 'ADEQUATE' | 'CRITICAL';
+  helpline_contact: string;
+  distance_km_from_valley: number;
+  is_active_staging_area: boolean;
+}
+
+export interface SitRepData {
+  sitrep_number: string;
+  timestamp: string;
+  reporting_agency: string;
+  operation_codename: string;
+  monitored_region: string;
+  summary_statistics: {
+    total_monitored_wards: number;
+    critical_warning_count: number;
+    advisory_watch_count: number;
+    safe_normal_count: number;
+    total_shelter_capacity: number;
+    current_shelter_occupancy: number;
+    available_shelter_capacity: number;
+    active_iot_telemetry_nodes: number;
+  };
+  critical_wards_details: Array<{
+    ward_id: string;
+    ward_name: string;
+    district: string;
+    risk_score: number;
+    alert_level: string;
+    lead_time_hours: number;
+    rainfall_current_24h: number;
+    rainfall_antecedent_72h: number;
+  }>;
+  evacuation_status: {
+    designated_shelters_active: number;
+    food_medical_readiness: string;
+    emergency_helpline: string;
+  };
+}
+
+export interface SensorNode {
+  node_id: string;
+  node_name: string;
+  ward_id: string;
+  ward_name: string;
+  district_name: string;
+  latitude: number;
+  longitude: number;
+  river_name: string;
+  water_level_cm: number;
+  water_level_rate_cm_per_hr: number;
+  tilt_angle_deg: number;
+  battery_level_pct: number;
+  status: 'NORMAL' | 'SURGE_WARNING' | 'DANGER';
+  last_ping: string;
+}
+
+export interface AlertDispatchRecord {
+  dispatch_id: string;
+  timestamp: string;
+  ward_id: string;
+  ward_name: string;
+  risk_score: number;
+  alert_level: string;
+  recipient?: string;
+  recipients_count?: number;
+  recipients?: string[];
+  message_body?: string;
+  message_preview?: string;
+  status: string;
+  provider: string;
+  error_detail?: string | null;
+}
+
+export interface SimulationResponse {
+  simulated_rainfall_24h_mm: number;
+  simulated_rainfall_72h_mm: number;
+  wards: WardRisk[];
+  detailed_ward?: WardRisk | null;
+}
+
+

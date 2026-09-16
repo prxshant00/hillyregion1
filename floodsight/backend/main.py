@@ -1,0 +1,135 @@
+"""
+Main FastAPI Application for FloodSight.
+Production-grade configuration with CORS, structured logging, centralized error handling,
+OpenAPI documentation, and lifecycle events.
+"""
+from contextlib import asynccontextmanager
+import logging
+import time
+from pathlib import Path
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from floodsight.config import settings
+from floodsight.backend.api.v1.endpoints import router as api_v1_router
+from floodsight.modeling.model_store import ModelStore
+from floodsight.modeling.train import train_model
+
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Configure structured logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger("floodsight.backend")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initializing FloodSight service lifecycle...")
+    # Check if model artifact exists; if not, train model on startup
+    store = ModelStore()
+    if not store.is_trained():
+        logger.info("Model weights not detected. Executing initial training pipeline...")
+        train_model()
+    else:
+        logger.info("Loaded pre-trained model weights and metadata from artifacts.")
+
+    yield
+    logger.info("Shutting down FloodSight service...")
+
+
+app = FastAPI(
+    title="FloodSight - Hyper-Local Flash Flood Early Warning System",
+    description=(
+        "Production-grade Early Warning System for Hilly Regions (SIH26192, Ministry of Home Affairs / NDRF). "
+        "Fuses real-time precipitation, terrain attributes, soil saturation, and explainable ML "
+        "for ward-level risk scoring across Mandi, Kullu, and Kangra districts."
+    ),
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan
+)
+
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Path normalizer middleware: handles Vercel serverless /api/index.py prefix
+@app.middleware("http")
+async def normalize_api_path(request: Request, call_next):
+    path = request.scope.get("path", "")
+    if "/api/index.py" in path:
+        request.scope["path"] = path.replace("/api/index.py", "", 1) or "/"
+    return await call_next(request)
+
+
+# Request timing middleware & structured logging
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = (time.perf_counter() - start_time) * 1000
+    response.headers["X-Process-Time-Ms"] = f"{process_time:.2f}"
+    return response
+
+
+# Centralized exception handler: Prevent leaking raw tracebacks
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception processing %s: %s", request.url.path, str(exc), exc_info=True)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "INTERNAL_SERVER_ERROR",
+            "message": "An internal error occurred while processing the early-warning request.",
+            "path": request.url.path
+        }
+    )
+
+
+# Mount API v1 router with both /api/v1 and /v1 prefixes for seamless local & serverless routing
+app.include_router(api_v1_router, prefix="/api/v1")
+app.include_router(api_v1_router, prefix="/v1")
+
+
+@app.get("/health", tags=["System"])
+@app.get("/api/health", tags=["System"])
+@app.get("/api/v1/health", tags=["System"])
+async def health_check():
+    """Health check endpoint for container orchestrators and uptime monitoring."""
+    return {
+        "status": "HEALTHY",
+        "service": "FloodSight-Early-Warning-API",
+        "version": "1.0.0",
+        "environment": settings.ENVIRONMENT
+    }
+
+
+@app.get("/", tags=["System"])
+async def root():
+    return {
+        "project": "FloodSight Early Warning System",
+        "problem_statement": "SIH26192 - Ministry of Home Affairs (NDRF)",
+        "docs_url": "/docs",
+        "api_v1_prefix": "/api/v1"
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "floodsight.backend.main:app",
+        host=settings.API_HOST,
+        port=settings.API_PORT,
+        reload=(settings.ENVIRONMENT == "development")
+    )

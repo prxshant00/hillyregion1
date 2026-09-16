@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  # Spatial & Time-Series Data Layer
+  floodsight-db:
+    image: postgis/postgis:15-3.3
+    container_name: floodsight-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: floodsight_db
+      POSTGRES_USER: floodsight
+      POSTGRES_PASSWORD: floodsight_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U floodsight -d floodsight_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MQTT Telemetry Broker for ESP32 Field Nodes
+  floodsight-mqtt:
+    image: eclipse-mosquitto:2
+    container_name: floodsight-mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto-data:/mosquitto/data
+
+  # FastAPI Backend Service
+  floodsight-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: floodsight-api
+    restart: unless-stopped
+    depends_on:
+      floodsight-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://floodsight:floodsight_secret@floodsight-db:5432/floodsight_db
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      NOTIFICATION_PROVIDER: console
+    ports:
+      - "8000:8000"
+
+  # React + Leaflet Tactical Frontend
+  floodsight-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: floodsight-frontend
+    restart: unless-stopped
+    depends_on:
+      - floodsight-api
+    ports:
+      - "5173:80"
+
+volumes:
+  pgdata:
+  mosquitto-data:
