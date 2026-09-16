@@ -6,7 +6,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6.svg)](https://www.typescriptlang.org/)
-[![Tests Passing](https://img.shields.io/badge/tests-33%20passed%20(100%25)-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-35%20passed%20(100%25)-brightgreen.svg)]()
 [![WCAG 2.1](https://img.shields.io/badge/a11y-WCAG%202.1%20AA%2FAAA-purple.svg)]()
 
 > **Smart India Hackathon 2026 — Problem Statement SIH26192**  
@@ -161,6 +161,8 @@ To maintain scientific and engineering integrity, FloodSight strictly demarcates
 | `GET` | `/api/v1/alerts/cap.xml` | NDMA-standard OASIS CAP v1.2 emergency alert XML feed. |
 | `GET` | `/api/v1/alerts/cap.json` | NDMA-standard OASIS CAP v1.2 emergency alert JSON feed. |
 | `GET` | `/api/v1/hydrology/id-curve/{ward_id}` | Rainfall Intensity-Duration threshold curve based on GSI/CWC formula. |
+| `GET` | `/api/v1/metrics` | Prometheus observability metrics format for Grafana / Ops scrapers. |
+| `GET` | `/api/v1/stream/telemetry` | Server-Sent Events (SSE) real-time ultrasonic sensor stream. |
 | `GET` | `/api/v1/sensors` | Real-time telemetry feed from all ultrasonic river gauge nodes. |
 | `POST` | `/api/v1/sensors/{node_id}/ping` | Live ping test to IoT sonar sensor node. |
 | `POST` | `/api/v1/ingest/sensor` | Telemetry ingestion endpoint for physical/simulated ESP32 nodes. |
