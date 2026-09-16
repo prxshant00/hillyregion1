@@ -7,7 +7,6 @@ and the real documented June–August 2025 Himachal disaster window for strict t
 from datetime import date
 from typing import List, Dict, Any, Tuple
 import numpy as np
-import pandas as pd
 from floodsight.modeling.features import FEATURE_NAMES, WardFeatureProfile
 
 # Verified Ward / Tehsil Profiles across Mandi, Kullu, Kangra
@@ -436,13 +435,14 @@ DOCUMENTED_2025_EVENTS: List[Dict[str, Any]] = [
 ]
 
 
-def generate_temporal_dataset(seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def generate_temporal_dataset(seed: int = 42) -> Tuple[Any, Any]:
     """
     Generates realistic training and holdout validation datasets with temporal separation:
     - Train set: 2022-01-01 to 2025-05-31 (Historical baseline + seasonal monsoons)
     - Test / Holdout set: 2025-06-01 to 2025-08-31 (Strict temporal holdout during the 2025 disaster)
     Prevents any temporal leakage from future events into model training.
     """
+    import pandas as pd
     rng = np.random.default_rng(seed)
     train_records = []
     test_records = []

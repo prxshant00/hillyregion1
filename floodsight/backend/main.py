@@ -9,12 +9,11 @@ import time
 from pathlib import Path
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from floodsight.config import settings
 from floodsight.backend.api.v1.endpoints import router as api_v1_router
 from floodsight.modeling.model_store import ModelStore
-from floodsight.modeling.train import train_model
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -33,6 +32,7 @@ async def lifespan(app: FastAPI):
     store = ModelStore()
     if not store.is_trained():
         logger.info("Model weights not detected. Executing initial training pipeline...")
+        from floodsight.modeling.train import train_model
         train_model()
     else:
         logger.info("Loaded pre-trained model weights and metadata from artifacts.")
@@ -104,6 +104,10 @@ async def generic_exception_handler(request: Request, exc: Exception):
 app.include_router(api_v1_router, prefix="/api/v1")
 app.include_router(api_v1_router, prefix="/v1")
 
+DIST_DIR = ROOT_DIR / "frontend" / "dist"
+if (DIST_DIR / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(DIST_DIR / "assets")), name="assets")
+
 
 @app.get("/health", tags=["System"])
 @app.get("/api/health", tags=["System"])
@@ -118,25 +122,31 @@ async def health_check():
     }
 
 
-@app.get("/api/debug-headers", tags=["System"])
-@app.get("/debug-headers", tags=["System"])
-async def debug_headers(request: Request):
-    return {
-        "scope_path": request.scope.get("path"),
-        "url_path": request.url.path,
-        "x_matched_path": request.headers.get("x-matched-path"),
-        "headers": dict(request.headers)
-    }
-
-
-@app.get("/", tags=["System"])
-async def root():
+@app.get("/api", tags=["System"])
+async def api_info():
     return {
         "project": "FloodSight Early Warning System",
         "problem_statement": "SIH26192 - Ministry of Home Affairs (NDRF)",
         "docs_url": "/docs",
         "api_v1_prefix": "/api/v1"
     }
+
+
+@app.get("/", tags=["System"])
+async def root(request: Request):
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        index_file = DIST_DIR / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file))
+    return {
+        "project": "FloodSight Early Warning System",
+        "problem_statement": "SIH26192 - Ministry of Home Affairs (NDRF)",
+        "docs_url": "/docs",
+        "api_v1_prefix": "/api/v1"
+    }
+
+
 
 
 if __name__ == "__main__":
