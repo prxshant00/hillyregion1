@@ -67,9 +67,12 @@ app.add_middleware(
 # Path normalizer middleware: handles Vercel serverless /api/index.py prefix
 @app.middleware("http")
 async def normalize_api_path(request: Request, call_next):
-    path = request.scope.get("path", "")
-    if "/api/index.py" in path:
-        request.scope["path"] = path.replace("/api/index.py", "", 1) or "/"
+    matched_path = request.headers.get("x-matched-path")
+    if matched_path:
+        clean_path = matched_path.split("?")[0]
+        request.scope["path"] = clean_path
+    elif "/api/index.py" in request.scope.get("path", ""):
+        request.scope["path"] = request.scope["path"].replace("/api/index.py", "", 1) or "/"
     return await call_next(request)
 
 
@@ -112,6 +115,17 @@ async def health_check():
         "service": "FloodSight-Early-Warning-API",
         "version": "1.0.0",
         "environment": settings.ENVIRONMENT
+    }
+
+
+@app.get("/api/debug-headers", tags=["System"])
+@app.get("/debug-headers", tags=["System"])
+async def debug_headers(request: Request):
+    return {
+        "scope_path": request.scope.get("path"),
+        "url_path": request.url.path,
+        "x_matched_path": request.headers.get("x-matched-path"),
+        "headers": dict(request.headers)
     }
 
 
