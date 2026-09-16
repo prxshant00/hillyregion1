@@ -9,7 +9,8 @@ import {
   Send,
   Radio,
   CheckCircle2,
-  Info
+  Info,
+  Volume2
 } from 'lucide-react';
 import { WardRisk } from '../types';
 import { alertBroadcaster } from '../utils/audioAlert';
@@ -222,8 +223,44 @@ export const WardDetailPanel: React.FC<WardDetailProps> = ({
         </div>
       )}
 
+      {/* Physical Hydrological Threshold (Intensity-Duration Curve) */}
+      <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800 text-[11px] font-mono">
+        <div className="flex items-center justify-between text-slate-400 mb-1">
+          <span className="text-[10px] text-slate-300 font-bold uppercase">CWC / GSI Rainfall Threshold</span>
+          <span className="text-[9px] text-cyan-400">I = 14.82·D⁻⁰·³⁹</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="text-slate-300">
+            Rate: <span className="font-bold text-white">{(ward.rainfall_current_24h / 24).toFixed(2)} mm/h</span>
+            <span className="text-slate-500 text-[10px]"> (Limit: 4.29 mm/h)</span>
+          </div>
+          <span
+            className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+              ward.rainfall_current_24h >= 103.0
+                ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+            }`}
+          >
+            {ward.rainfall_current_24h >= 103.0 ? 'BREACHED (SURGE LIKELY)' : 'NOMINAL THRESHOLD'}
+          </span>
+        </div>
+      </div>
+
       {/* Operational Actions */}
       <div className="pt-2 space-y-2">
+        <button
+          onClick={() => {
+            const text = i18n.language === 'hi'
+              ? `वार्ड ${ward.ward_name} के लिए स्थिति रिपोर्ट। वर्तमान जोखिम स्कोर ${ward.risk_score.toFixed(0)} है। 24 घंटे की वर्षा ${ward.rainfall_current_24h.toFixed(0)} मिलीमीटर है। अनुमानित लीड टाइम ${ward.lead_time_hours.toFixed(1)} घंटे।`
+              : `Situation briefing for ${ward.ward_name}. Current composite risk index is ${ward.risk_score.toFixed(0)} out of 100. Current 24 hour rainfall is ${ward.rainfall_current_24h.toFixed(0)} millimeters. Actionable lead time is ${ward.lead_time_hours.toFixed(1)} hours.`;
+            alertBroadcaster.speakDirective(text, i18n.language as 'en' | 'hi');
+          }}
+          className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-800/60 text-xs flex items-center justify-center space-x-1.5 transition-all"
+        >
+          <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Listen Tactical Voice Briefing</span>
+        </button>
+
         <button
           onClick={handleDispatch}
           disabled={isSending}

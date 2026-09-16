@@ -11,6 +11,8 @@ import { SearchPalette } from './components/SearchPalette';
 import { SimulationSandbox } from './components/SimulationSandbox';
 import { IoTSensorsModal } from './components/IoTSensorsModal';
 import { AlertsAuditModal } from './components/AlertsAuditModal';
+import { RiverCascadeModal } from './components/RiverCascadeModal';
+import { CAPModal } from './components/CAPModal';
 import {
   WardRisk,
   ValidationEvent,
@@ -42,6 +44,8 @@ export const App: React.FC = () => {
   const [isSitRepOpen, setIsSitRepOpen] = useState(false);
   const [isSensorsOpen, setIsSensorsOpen] = useState(false);
   const [isAlertsAuditOpen, setIsAlertsAuditOpen] = useState(false);
+  const [isRiverCascadeOpen, setIsRiverCascadeOpen] = useState(false);
+  const [isCAPOpen, setIsCAPOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showSandbox, setShowSandbox] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -59,6 +63,8 @@ export const App: React.FC = () => {
         setIsSitRepOpen(false);
         setIsSensorsOpen(false);
         setIsAlertsAuditOpen(false);
+        setIsRiverCascadeOpen(false);
+        setIsCAPOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -287,6 +293,8 @@ export const App: React.FC = () => {
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenSensors={() => setIsSensorsOpen(true)}
         onOpenAlertsAudit={() => setIsAlertsAuditOpen(true)}
+        onOpenRiverCascade={() => setIsRiverCascadeOpen(true)}
+        onOpenCAP={() => setIsCAPOpen(true)}
         activeSensorsCount={sensors.length || 4}
       />
 
@@ -439,6 +447,17 @@ export const App: React.FC = () => {
       <AlertsAuditModal
         isOpen={isAlertsAuditOpen}
         onClose={() => setIsAlertsAuditOpen(false)}
+      />
+
+      <RiverCascadeModal
+        isOpen={isRiverCascadeOpen}
+        onClose={() => setIsRiverCascadeOpen(false)}
+        onSelectWard={(wardId) => setSelectedWardId(wardId)}
+      />
+
+      <CAPModal
+        isOpen={isCAPOpen}
+        onClose={() => setIsCAPOpen(false)}
       />
 
       <SearchPalette

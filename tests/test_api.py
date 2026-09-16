@@ -206,3 +206,53 @@ def test_alerts_history_endpoint():
     history = resp.json()
     assert isinstance(history, list)
 
+
+def test_catchment_networks_endpoint():
+    resp = client.get("/api/v1/catchment/networks")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 3
+    rivers = [b["river"] for b in data]
+    assert "Beas" in rivers
+    assert "Parbati" in rivers
+    assert "Tirthan" in rivers
+
+
+def test_catchment_cascade_endpoint():
+    resp = client.get("/api/v1/catchment/cascade/HP-KLU-04?surge_stage_m=4.2")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["origin_ward_id"] == "HP-KLU-04"
+    assert data["downstream_wards_at_risk_count"] == 4
+    first_downstream = data["downstream_cascade"][0]
+    assert first_downstream["estimated_surge_arrival_hours"] > 0
+    assert first_downstream["projected_peak_stage_m"] > 0
+
+
+def test_cap_alerts_endpoints():
+    # Test JSON CAP
+    resp_json = client.get("/api/v1/alerts/cap.json")
+    assert resp_json.status_code == 200
+    data = resp_json.json()
+    assert "alert" in data
+    assert data["alert"]["status"] == "Actual"
+    assert len(data["alert"]["info"]) >= 1
+
+    # Test XML CAP
+    resp_xml = client.get("/api/v1/alerts/cap.xml")
+    assert resp_xml.status_code == 200
+    assert "application/xml" in resp_xml.headers["content-type"]
+    assert "<alert" in resp_xml.text
+    assert "</alert>" in resp_xml.text
+
+
+def test_id_curve_endpoint():
+    resp = client.get("/api/v1/hydrology/id-curve/HP-MND-04")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "empirical_formula" in data
+    assert "threshold_intensity_mm_h" in data
+    assert "curve_points" in data
+    assert len(data["curve_points"]) == 7
+
+

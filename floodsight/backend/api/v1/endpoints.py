@@ -25,9 +25,12 @@ from floodsight.backend.services.alert_service import alert_service
 from floodsight.backend.services.history_service import history_service
 from floodsight.backend.services.ward_registry import ward_registry
 from floodsight.backend.services.shelter_service import shelter_service, EvacuationShelter
+from floodsight.backend.services.catchment_service import catchment_service
+from floodsight.backend.services.cap_service import cap_service
 from floodsight.ingestion.sensor_stream import SensorTelemetryPayload, process_sensor_reading, SensorIngestionResult
 from floodsight.modeling.dataset import DOCUMENTED_2025_EVENTS
 from floodsight.modeling.model_store import ModelStore
+from fastapi.responses import Response
 
 router = APIRouter(tags=["FloodSight Early Warning API"])
 
@@ -271,4 +274,80 @@ async def get_alerts_history():
     """Returns the immutable historical dispatch log of all emergency alerts sent."""
     records = alert_service.get_recent_dispatches()
     return [r.model_dump(mode="json") for r in records]
+
+
+@router.get("/catchment/networks")
+async def get_catchment_networks():
+    """Returns the topologically-sorted river networks across Beas, Parbati, and Tirthan."""
+    return catchment_service.get_all_networks()
+
+
+@router.get("/catchment/cascade/{ward_id}")
+async def get_cascade_impact(ward_id: str, surge_stage_m: float = 3.5):
+    """Calculates downstream floodwave arrival ETA and peak stage transmission for a ward."""
+    return catchment_service.calculate_cascade_impact(ward_id, surge_stage_m)
+
+
+@router.get("/alerts/cap.json")
+async def get_cap_alerts_json():
+    """Returns NDMA-standard OASIS CAP v1.2 emergency alert feed in JSON."""
+    wards = risk_service.get_all_summaries()
+    critical_wards = [w.model_dump() for w in wards if w.risk_score >= 40.0]
+    if not critical_wards:
+        critical_wards = [wards[0].model_dump()] if wards else []
+    return cap_service.generate_cap_dict(critical_wards)
+
+
+@router.get("/alerts/cap.xml")
+async def get_cap_alerts_xml():
+    """Returns NDMA-standard OASIS CAP v1.2 emergency alert feed in XML."""
+    wards = risk_service.get_all_summaries()
+    critical_wards = [w.model_dump() for w in wards if w.risk_score >= 40.0]
+    if not critical_wards:
+        critical_wards = [wards[0].model_dump()] if wards else []
+    xml_content = cap_service.generate_cap_xml(critical_wards)
+    return Response(content=xml_content, media_type="application/xml")
+
+
+@router.get("/hydrology/id-curve/{ward_id}")
+async def get_id_curve_threshold(ward_id: str):
+    """
+    Returns the physical Rainfall Intensity-Duration (I-D) Threshold curve parameters
+    based on GSI / CWC Himalayan empirical equation: I = 14.82 * D^(-0.39).
+    """
+    try:
+        ward_detail = risk_service.get_ward_risk(ward_id)
+        rain_24h = ward_detail.features_summary.get("rainfall_current_24h", 25.0)
+    except Exception:
+        rain_24h = 35.0
+
+    # Measured intensity (mm/h) assuming 24h storm
+    current_duration_hours = 24.0
+    current_intensity_mm_h = round(rain_24h / current_duration_hours, 2)
+    # Threshold intensity from GSI Himalayan empirical equation: I_c = 14.82 * (D)^(-0.39)
+    threshold_intensity_mm_h = round(14.82 * (current_duration_hours ** -0.39), 2)
+    breached = current_intensity_mm_h >= threshold_intensity_mm_h
+
+    # Curve points for D in [1, 3, 6, 12, 24, 48, 72] hours
+    durations = [1, 3, 6, 12, 24, 48, 72]
+    curve_points = [
+        {
+            "duration_hours": d,
+            "threshold_intensity_mm_h": round(14.82 * (d ** -0.39), 2),
+            "threshold_total_rainfall_mm": round(14.82 * (d ** -0.39) * d, 1)
+        }
+        for d in durations
+    ]
+
+    return {
+        "ward_id": ward_id,
+        "empirical_formula": "I = 14.82 * D^(-0.39) (GSI / CWC Western Himalayan Threshold)",
+        "current_duration_hours": current_duration_hours,
+        "current_intensity_mm_h": current_intensity_mm_h,
+        "threshold_intensity_mm_h": threshold_intensity_mm_h,
+        "physical_threshold_breached": breached,
+        "hazard_ratio": round(current_intensity_mm_h / max(0.01, threshold_intensity_mm_h), 2),
+        "curve_points": curve_points
+    }
+
 

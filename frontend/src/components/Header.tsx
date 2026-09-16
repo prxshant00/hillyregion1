@@ -10,7 +10,9 @@ import {
   Volume2,
   VolumeX,
   FileSpreadsheet,
-  Send
+  Send,
+  Waves,
+  Rss
 } from 'lucide-react';
 import { alertBroadcaster } from '../utils/audioAlert';
 
@@ -21,6 +23,8 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onOpenSensors: () => void;
   onOpenAlertsAudit: () => void;
+  onOpenRiverCascade: () => void;
+  onOpenCAP: () => void;
   activeSensorsCount: number;
 }
 
@@ -31,6 +35,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSearch,
   onOpenSensors,
   onOpenAlertsAudit,
+  onOpenRiverCascade,
+  onOpenCAP,
   activeSensorsCount
 }) => {
   const { t, i18n } = useTranslation();
@@ -103,6 +109,28 @@ export const Header: React.FC<HeaderProps> = ({
             <kbd className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">Ctrl+K</kbd>
           </button>
 
+
+          {/* River Cascade Routing Button */}
+          <button
+            onClick={onOpenRiverCascade}
+            className="flex items-center space-x-1.5 bg-cyan-950/60 hover:bg-cyan-900/70 text-cyan-300 border border-cyan-800/80 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all shadow-[0_0_8px_rgba(6,182,212,0.15)]"
+            title="Inspect Upstream-to-Downstream River Routing"
+            aria-label="Open River Cascade Inspector"
+          >
+            <Waves className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span className="hidden sm:inline">River Cascades</span>
+          </button>
+
+          {/* NDMA CAP Feed Button */}
+          <button
+            onClick={onOpenCAP}
+            className="flex items-center space-x-1.5 bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-800/70 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+            title="Open NDMA CAP-India OASIS XML Feed"
+            aria-label="Open Common Alerting Protocol Modal"
+          >
+            <Rss className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">CAP Feed</span>
+          </button>
 
           {/* SITREP Situation Report Button */}
           <button

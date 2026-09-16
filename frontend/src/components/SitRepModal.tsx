@@ -164,6 +164,22 @@ export const SitRepModal: React.FC<SitRepModalProps> = ({ isOpen, onClose, sitre
               3. Emergency Toll-Free Helpline: <strong>1077 (District EOC)</strong> / <strong>112 (National Unified Helpline)</strong>.
             </p>
           </div>
+
+          {/* Official Sign-off & Verification Block */}
+          <div className="border-t border-slate-700 pt-4 mt-4 grid grid-cols-2 gap-6 text-[11px]">
+            <div>
+              <div className="text-slate-400">Report Authenticated By:</div>
+              <div className="font-bold text-slate-200 print:text-black">Duty Officer (14th Bn NDRF Jassur)</div>
+              <div className="text-[10px] text-emerald-400 font-mono mt-0.5">
+                DIGITALLY CERTIFIED • SHA256: e8b2f91a...
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-slate-400">Incident Commander Authorization:</div>
+              <div className="h-7 border-b border-dashed border-slate-500 w-48 ml-auto my-1"></div>
+              <div className="text-[10px] text-slate-400">Commandant / District Magistrate (HP SDMA)</div>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

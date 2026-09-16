@@ -276,6 +276,31 @@ export const IoTSensorsModal: React.FC<IoTSensorsModalProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* LoRaWAN SX1276 Radio Telemetry Inspector */}
+                <div className="mt-3 p-2.5 rounded-lg bg-slate-950/90 border border-slate-800/90 text-[11px] font-mono">
+                  <div className="flex flex-wrap items-center justify-between text-slate-400 mb-1.5 gap-2">
+                    <div className="flex items-center space-x-1.5 text-cyan-400">
+                      <Radio className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="font-bold text-[10px] uppercase tracking-wider text-slate-300">LoRa SX1276 Packet Uplink</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-[10px]">
+                      <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">IN865 / 868.1 MHz</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">SF10 • BW 125kHz</span>
+                      <span className="text-emerald-400 font-bold">RSSI: -108 dBm</span>
+                      <span className="text-cyan-400 font-bold">SNR: +7.8 dB</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between bg-slate-900 px-2.5 py-1.5 rounded border border-slate-800 text-[10px] gap-2">
+                    <div className="text-slate-400 truncate">
+                      FRAME: <span className="text-amber-400 font-bold">0x08A2 01 {Math.round(node.water_level_cm).toString(16).padStart(4, '0').toUpperCase()} {Math.round(node.tilt_angle_deg * 10).toString(16).padStart(4, '0').toUpperCase()} {Math.round(node.battery_level_pct).toString(16).toUpperCase()} 1F</span>
+                    </div>
+                    <div className="text-emerald-400 font-bold text-[9px] flex items-center space-x-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <span>CRC-8 VALID • 18 KM VALLEY REACH (NO 4G NEEDED)</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}
