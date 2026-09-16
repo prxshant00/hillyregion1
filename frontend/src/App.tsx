@@ -9,6 +9,7 @@ import { ModelCardModal } from './components/ModelCardModal';
 import { SitRepModal } from './components/SitRepModal';
 import { SearchPalette } from './components/SearchPalette';
 import { SimulationSandbox } from './components/SimulationSandbox';
+import { DigitalTwinControls } from './components/DigitalTwinControls';
 import { IoTSensorsModal } from './components/IoTSensorsModal';
 import { AlertsAuditModal } from './components/AlertsAuditModal';
 import { RiverCascadeModal } from './components/RiverCascadeModal';
@@ -16,6 +17,8 @@ import { CAPModal } from './components/CAPModal';
 import { ExportDataModal } from './components/ExportDataModal';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { alertBroadcaster } from './utils/audioAlert';
+import { useLiveTelemetry } from './hooks/useLiveTelemetry';
+import { DIGITAL_TWIN_STEPS, applyDigitalTwinStep } from './services/digitalTwinSimulator';
 import {
   WardRisk,
   ValidationEvent,
@@ -24,13 +27,15 @@ import {
   SitRepData,
   SensorNode
 } from './types';
-import { Filter, RefreshCw, SlidersHorizontal, Volume2 } from 'lucide-react';
+import { Filter, RefreshCw, SlidersHorizontal, Volume2, Clock } from 'lucide-react';
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
 
   // Core State
   const [wards, setWards] = useState<WardRisk[]>([]);
+  const [baselineWards, setBaselineWards] = useState<WardRisk[]>([]);
+  const [baselineSensors, setBaselineSensors] = useState<SensorNode[]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState<string>('All');
   const [selectedWardId, setSelectedWardId] = useState<string>('HP-MND-02'); // Default: Thunag (Seraj Basin)
   const [selectedWardDetail, setSelectedWardDetail] = useState<WardRisk | null>(null);
@@ -53,7 +58,14 @@ export const App: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [showSandbox, setShowSandbox] = useState(false);
+  const [showDigitalTwin, setShowDigitalTwin] = useState(false);
+  const [twinStepIndex, setTwinStepIndex] = useState(0);
+  const [isSimulatingTwin, setIsSimulatingTwin] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Live SSE Telemetry Stream Hook
+  const { isConnected: isSSEConnected, streamingSensors } = useLiveTelemetry(sensors);
+  const activeSensors = isSimulatingTwin ? sensors : (streamingSensors.length > 0 ? streamingSensors : sensors);
 
   // Accessibility States
   const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {
@@ -152,6 +164,7 @@ export const App: React.FC = () => {
         const wardsRes = await fetch('/api/v1/risk/all');
         const wardsData = await wardsRes.json();
         setWards(wardsData);
+        setBaselineWards(wardsData);
 
         // GeoJSON boundaries
         const geoRes = await fetch('/api/v1/wards/geojson');
@@ -175,6 +188,7 @@ export const App: React.FC = () => {
         if (sensorsRes.ok) {
           const sensorsData = await sensorsRes.json();
           setSensors(sensorsData);
+          setBaselineSensors(sensorsData);
         }
 
         // Model Card Info
@@ -221,6 +235,7 @@ export const App: React.FC = () => {
       const wardsRes = await fetch('/api/v1/risk/all');
       const wardsData = await wardsRes.json();
       setWards(wardsData);
+      setBaselineWards(wardsData);
 
       if (selectedWardId) {
         const detailRes = await fetch(`/api/v1/risk/${selectedWardId}`);
@@ -240,12 +255,43 @@ export const App: React.FC = () => {
       if (sensorsRes.ok) {
         const sensorsData = await sensorsRes.json();
         setSensors(sensorsData);
+        setBaselineSensors(sensorsData);
       }
     } catch (e) {
       console.error(e);
     } finally {
       setIsRefreshing(false);
     }
+  };
+
+  // 4D Digital Twin Simulation Step Change Handler
+  const handleTwinStepChange = (index: number) => {
+    setTwinStepIndex(index);
+    setIsSimulatingTwin(true);
+    const baseWards = baselineWards.length > 0 ? baselineWards : wards;
+    const baseSensors = baselineSensors.length > 0 ? baselineSensors : sensors;
+    const step = DIGITAL_TWIN_STEPS[index];
+    const { updatedWards, updatedSensors } = applyDigitalTwinStep(baseWards, step, baseSensors);
+    setWards(updatedWards);
+    setSensors(updatedSensors);
+
+    if (selectedWardId) {
+      const matched = updatedWards.find(w => w.ward_id === selectedWardId);
+      if (matched) setSelectedWardDetail(matched);
+    }
+  };
+
+  // Reset Digital Twin to Real-time Ingestion
+  const handleResetDigitalTwin = async () => {
+    setIsSimulatingTwin(false);
+    setTwinStepIndex(0);
+    if (baselineWards.length > 0) {
+      setWards(baselineWards);
+    }
+    if (baselineSensors.length > 0) {
+      setSensors(baselineSensors);
+    }
+    await handleRefresh();
   };
 
   // Trigger Emergency Alert
@@ -324,7 +370,6 @@ export const App: React.FC = () => {
       })
     );
 
-    // Update selected ward detail in sync
     if (selectedWardDetail) {
       setSelectedWardDetail((prev) =>
         prev
@@ -403,7 +448,7 @@ export const App: React.FC = () => {
         onOpenRiverCascade={() => setIsRiverCascadeOpen(true)}
         onOpenCAP={() => setIsCAPOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
-        activeSensorsCount={sensors.length || 4}
+        activeSensorsCount={activeSensors.length || 4}
         isHighContrast={isHighContrast}
         onToggleHighContrast={handleToggleHighContrast}
         textScale={textScale}
@@ -437,26 +482,52 @@ export const App: React.FC = () => {
             ))}
           </div>
 
-          {/* KPI Metrics & Sandbox Toggle */}
-          <div className="flex items-center flex-wrap gap-4 text-xs font-mono">
+          {/* KPI Metrics & Simulation Toggles */}
+          <div className="flex items-center flex-wrap gap-3 text-xs font-mono">
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase">Monitored Wards</span>
+              <span className="text-slate-400 block text-[10px] uppercase">Monitored</span>
               <strong className="text-sm text-white">{totalWards} Units</strong>
             </div>
 
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase">High/Crit Alert</span>
+              <span className="text-slate-400 block text-[10px] uppercase">Warning/Watch</span>
               <strong className="text-sm text-red-400 font-bold">{criticalCount} Active</strong>
             </div>
 
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase">Avg Regional Risk</span>
+              <span className="text-slate-400 block text-[10px] uppercase">Mean Risk</span>
               <strong className="text-sm text-amber-300">{meanScore} / 100</strong>
             </div>
 
+            {/* SSE Live Telemetry Feed Badge */}
+            <div className="flex items-center space-x-1.5 text-[10px] font-mono px-2 py-1.5 rounded bg-slate-900 border border-slate-800">
+              <span className={`w-2 h-2 rounded-full ${isSSEConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+              <span className="text-slate-300 hidden sm:inline">{isSSEConnected ? 'SSE Live Stream' : 'Telemetry Feed'}</span>
+            </div>
+
+            {/* 4D Digital Twin Time-Lapse Toggle */}
+            <button
+              onClick={() => {
+                setShowDigitalTwin(!showDigitalTwin);
+                if (showSandbox) setShowSandbox(false);
+              }}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-mono focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                showDigitalTwin
+                  ? 'bg-cyan-950 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                  : 'bg-tactical-card border-tactical-border text-slate-300 hover:bg-slate-700'
+              }`}
+              aria-expanded={showDigitalTwin}
+            >
+              <Clock className="w-3.5 h-3.5 text-cyan-400" />
+              <span>4D Digital Twin</span>
+            </button>
+
             {/* Sandbox Simulation Toggle */}
             <button
-              onClick={() => setShowSandbox(!showSandbox)}
+              onClick={() => {
+                setShowSandbox(!showSandbox);
+                if (showDigitalTwin) setShowDigitalTwin(false);
+              }}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-mono focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                 showSandbox
                   ? 'bg-cyan-950 border-cyan-500 text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
@@ -466,7 +537,8 @@ export const App: React.FC = () => {
               aria-controls="simulation-sandbox-panel"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Simulate Cloudburst</span>
+              <span className="hidden sm:inline">Simulate Cloudburst</span>
+              <span className="sm:hidden">Simulate</span>
             </button>
 
             {/* Refresh Feeds */}
@@ -481,6 +553,18 @@ export const App: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* 4D Digital Twin Simulator Controls (Collapsible) */}
+        {showDigitalTwin && (
+          <div className="animate-fadeIn">
+            <DigitalTwinControls
+              currentStepIndex={twinStepIndex}
+              onStepChange={handleTwinStepChange}
+              onResetToLive={handleResetDigitalTwin}
+              isSimulating={isSimulatingTwin}
+            />
+          </div>
+        )}
 
         {/* Simulation Sandbox (Collapsible) */}
         {showSandbox && (
@@ -502,7 +586,7 @@ export const App: React.FC = () => {
               onSelectWard={(wardId) => setSelectedWardId(wardId)}
               validationEvents={validationEvents}
               geoJsonData={geoJsonData}
-              sensors={sensors}
+              sensors={activeSensors}
             />
           </div>
 
@@ -553,7 +637,7 @@ export const App: React.FC = () => {
       <IoTSensorsModal
         isOpen={isSensorsOpen}
         onClose={() => setIsSensorsOpen(false)}
-        sensors={sensors}
+        sensors={activeSensors}
         onSelectWard={(wardId) => setSelectedWardId(wardId)}
         onSimulateSurge={handleSimulateSurge}
         onRefreshSensors={handleRefresh}

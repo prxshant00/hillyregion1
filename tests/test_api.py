@@ -256,3 +256,21 @@ def test_id_curve_endpoint():
     assert len(data["curve_points"]) == 7
 
 
+def test_prometheus_metrics_endpoint():
+    resp = client.get("/api/v1/metrics")
+    assert resp.status_code == 200
+    assert "text/plain" in resp.headers["content-type"]
+    text = resp.text
+    assert "floodsight_active_warnings_total" in text
+    assert "floodsight_regional_mean_risk_score" in text
+    assert "floodsight_iot_sensors_total" in text
+    assert "floodsight_adapter_health" in text
+
+
+def test_stream_telemetry_endpoint():
+    resp = client.get("/api/v1/stream/telemetry")
+    assert resp.status_code == 200
+    assert "text/event-stream" in resp.headers["content-type"]
+
+
+
