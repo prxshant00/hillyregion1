@@ -13,6 +13,8 @@ import { IoTSensorsModal } from './components/IoTSensorsModal';
 import { AlertsAuditModal } from './components/AlertsAuditModal';
 import { RiverCascadeModal } from './components/RiverCascadeModal';
 import { CAPModal } from './components/CAPModal';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { alertBroadcaster } from './utils/audioAlert';
 import {
   WardRisk,
   ValidationEvent,
@@ -21,7 +23,7 @@ import {
   SitRepData,
   SensorNode
 } from './types';
-import { Filter, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { Filter, RefreshCw, SlidersHorizontal, Volume2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
@@ -47,15 +49,82 @@ export const App: React.FC = () => {
   const [isRiverCascadeOpen, setIsRiverCascadeOpen] = useState(false);
   const [isCAPOpen, setIsCAPOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [showSandbox, setShowSandbox] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Global Shortcut Handler: Ctrl+K / Cmd+K opens search, Escape closes modals
+  // Accessibility States
+  const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {
+    return localStorage.getItem('floodsight_high_contrast') === 'true';
+  });
+  const [textScale, setTextScale] = useState<'normal' | 'large' | 'xlarge'>(() => {
+    return (localStorage.getItem('floodsight_text_scale') as 'normal' | 'large' | 'xlarge') || 'normal';
+  });
+  const [activeCaption, setActiveCaption] = useState<string | null>(null);
+
+  // Apply High-Contrast Mode
+  useEffect(() => {
+    document.documentElement.classList.toggle('high-contrast', isHighContrast);
+    localStorage.setItem('floodsight_high_contrast', String(isHighContrast));
+  }, [isHighContrast]);
+
+  // Apply Text Scaling
+  useEffect(() => {
+    document.documentElement.classList.remove('text-scale-large', 'text-scale-xlarge');
+    if (textScale === 'large') {
+      document.documentElement.classList.add('text-scale-large');
+    } else if (textScale === 'xlarge') {
+      document.documentElement.classList.add('text-scale-xlarge');
+    }
+    localStorage.setItem('floodsight_text_scale', textScale);
+  }, [textScale]);
+
+  // Subscribe to voice alert broadcasts for Live Closed Captions
+  useEffect(() => {
+    const unsubscribe = alertBroadcaster.onCaptionChange((text) => {
+      setActiveCaption(text);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleCycleTextScale = () => {
+    setTextScale(prev => {
+      if (prev === 'normal') return 'large';
+      if (prev === 'large') return 'xlarge';
+      return 'normal';
+    });
+  };
+
+  const handleToggleHighContrast = () => {
+    setIsHighContrast(prev => !prev);
+  };
+
+  // Global Keyboard Shortcuts Handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsSearchOpen(prev => !prev);
+      } else if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        setIsHighContrast(prev => !prev);
+      } else if (e.altKey && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        handleCycleTextScale();
+      } else if (e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        setIsSitRepOpen(prev => !prev);
+      } else if (e.key === '?' && !isInput) {
+        e.preventDefault();
+        setIsShortcutsOpen(prev => !prev);
+      } else if (!isInput && e.key >= '1' && e.key <= '4') {
+        const dists = ['All', 'Mandi', 'Kullu', 'Kangra'];
+        const idx = parseInt(e.key, 10) - 1;
+        if (dists[idx]) {
+          setSelectedDistrict(dists[idx]);
+        }
       } else if (e.key === 'Escape') {
         setIsSearchOpen(false);
         setIsValidationOpen(false);
@@ -65,6 +134,7 @@ export const App: React.FC = () => {
         setIsAlertsAuditOpen(false);
         setIsRiverCascadeOpen(false);
         setIsCAPOpen(false);
+        setIsShortcutsOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -89,8 +159,6 @@ export const App: React.FC = () => {
         const eventsRes = await fetch('/api/v1/events/validation');
         const eventsData = await eventsRes.json();
         setValidationEvents(eventsData);
-
-
 
         // SitRep
         const sitrepRes = await fetch('/api/v1/sitrep');
@@ -218,7 +286,6 @@ export const App: React.FC = () => {
   const handleApplySimulation = (simRain24h: number, simRain72h: number) => {
     setWards((prevWards) =>
       prevWards.map((w) => {
-        // Calculate dynamic response based on physical slope
         const slopeFactor = w.latitude ? 1.1 : 1.0;
         const simulatedScore = Math.min(
           100.0,
@@ -285,6 +352,43 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-tactical-bg text-slate-100 flex flex-col font-sans">
+      {/* Accessible Skip Link (WCAG 2.4.1) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2.5 focus:bg-amber-400 focus:text-slate-950 focus:font-bold focus:rounded-lg focus:shadow-2xl focus:ring-4 focus:ring-amber-500 focus:outline-none text-sm transition-all"
+      >
+        Skip to main emergency dashboard
+      </a>
+
+      {/* Closed Captions Banner for Spoken Voice Directive (WCAG 1.2.2) */}
+      {activeCaption && (
+        <aside
+          aria-live="assertive"
+          aria-atomic="true"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[92%] bg-black/95 border-2 border-amber-400 rounded-xl px-5 py-3 shadow-[0_0_30px_rgba(245,158,11,0.5)] flex items-center gap-3 backdrop-blur-md animate-fadeIn"
+          role="status"
+        >
+          <div className="w-8 h-8 rounded-full bg-amber-400/20 text-amber-400 flex items-center justify-center flex-shrink-0 animate-pulse">
+            <Volume2 className="w-5 h-5" aria-hidden="true" />
+          </div>
+          <div className="flex-1">
+            <p className="text-[10px] uppercase font-mono tracking-wider text-amber-400 font-bold">
+              Emergency Voice Broadcast (Closed Caption)
+            </p>
+            <p className="text-white font-medium text-sm sm:text-base leading-snug">
+              {activeCaption}
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveCaption(null)}
+            className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 transition-colors"
+            aria-label="Dismiss closed caption"
+          >
+            Dismiss
+          </button>
+        </aside>
+      )}
+
       {/* Tactical App Header */}
       <Header
         onOpenModelCard={() => setIsModelCardOpen(true)}
@@ -296,16 +400,21 @@ export const App: React.FC = () => {
         onOpenRiverCascade={() => setIsRiverCascadeOpen(true)}
         onOpenCAP={() => setIsCAPOpen(true)}
         activeSensorsCount={sensors.length || 4}
+        isHighContrast={isHighContrast}
+        onToggleHighContrast={handleToggleHighContrast}
+        textScale={textScale}
+        onCycleTextScale={handleCycleTextScale}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5" role="main">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5 focus:outline-none" role="main">
         {/* KPI Strip & District Selector */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-tactical-surface border border-tactical-border rounded-xl p-4 shadow-md">
           {/* District Filter Buttons */}
           <div className="flex items-center space-x-2 overflow-x-auto pb-1 lg:pb-0" role="tablist" aria-label="District Filter">
-            <Filter className="w-4 h-4 text-slate-400 mr-1 flex-shrink-0" />
-            {['All', 'Mandi', 'Kullu', 'Kangra'].map((dist) => (
+            <Filter className="w-4 h-4 text-slate-400 mr-1 flex-shrink-0" aria-hidden="true" />
+            {['All', 'Mandi', 'Kullu', 'Kangra'].map((dist, idx) => (
               <button
                 key={dist}
                 role="tab"
@@ -316,8 +425,10 @@ export const App: React.FC = () => {
                     ? 'bg-cyan-500 text-black font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]'
                     : 'bg-tactical-card hover:bg-slate-700 text-slate-300 border border-tactical-border'
                 }`}
+                aria-label={`Filter by ${dist} District (Press ${idx + 1})`}
               >
                 {dist === 'All' ? t('all_districts') : `${dist} District`}
+                <span className="sr-only">, shortcut key {idx + 1}</span>
               </button>
             ))}
           </div>
@@ -342,13 +453,15 @@ export const App: React.FC = () => {
             {/* Sandbox Simulation Toggle */}
             <button
               onClick={() => setShowSandbox(!showSandbox)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-mono ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-mono focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                 showSandbox
                   ? 'bg-cyan-950 border-cyan-500 text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
                   : 'bg-tactical-card border-tactical-border text-slate-300 hover:bg-slate-700'
               }`}
+              aria-expanded={showSandbox}
+              aria-controls="simulation-sandbox-panel"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Simulate Cloudburst</span>
             </button>
 
@@ -360,14 +473,14 @@ export const App: React.FC = () => {
               title="Refresh Ingestion Feeds"
               aria-label="Refresh Satellite and Ingestion Data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-400' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-400' : ''}`} aria-hidden="true" />
             </button>
           </div>
         </div>
 
         {/* Simulation Sandbox (Collapsible) */}
         {showSandbox && (
-          <div className="animate-fadeIn">
+          <div id="simulation-sandbox-panel" className="animate-fadeIn">
             <SimulationSandbox
               onApplySimulation={handleApplySimulation}
               onReset={handleRefresh}
@@ -427,8 +540,6 @@ export const App: React.FC = () => {
         modelInfo={modelInfo}
       />
 
-
-
       <SitRepModal
         isOpen={isSitRepOpen}
         onClose={() => setIsSitRepOpen(false)}
@@ -466,7 +577,11 @@ export const App: React.FC = () => {
         wards={wards}
         onSelectWard={(wardId) => setSelectedWardId(wardId)}
       />
+
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
     </div>
   );
 };
-

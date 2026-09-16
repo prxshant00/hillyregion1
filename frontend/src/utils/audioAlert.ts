@@ -2,10 +2,15 @@
  * Web Audio API Acoustic Siren & Speech Alert Synthesizer.
  * Provides instant sound and voice early-warning announcements
  * for field operations and NDRF command stations with zero external assets.
+ * Includes caption hooks for accessible visual subtitles.
  */
+
+type CaptionListener = (text: string | null) => void;
 
 class AudioAlertBroadcaster {
   private audioCtx: AudioContext | null = null;
+  private captionListeners: Set<CaptionListener> = new Set();
+  private captionTimeout: any = null;
 
   private getAudioContext(): AudioContext {
     if (!this.audioCtx) {
@@ -16,6 +21,23 @@ class AudioAlertBroadcaster {
       this.audioCtx.resume();
     }
     return this.audioCtx;
+  }
+
+  public onCaptionChange(listener: CaptionListener): () => void {
+    this.captionListeners.add(listener);
+    return () => {
+      this.captionListeners.delete(listener);
+    };
+  }
+
+  private notifyCaption(text: string | null) {
+    this.captionListeners.forEach(listener => {
+      try {
+        listener(text);
+      } catch (err) {
+        console.error('Error in caption listener:', err);
+      }
+    });
   }
 
   /**
@@ -51,9 +73,19 @@ class AudioAlertBroadcaster {
 
   /**
    * Broadcasts a voice warning directive via browser SpeechSynthesis.
+   * Dispatches live captions to registered accessibility listeners.
    */
   public speakDirective(text: string, lang: 'en' | 'hi' = 'en') {
-    if (!('speechSynthesis' in window)) return;
+    if (this.captionTimeout) {
+      clearTimeout(this.captionTimeout);
+    }
+    this.notifyCaption(text);
+
+    if (!('speechSynthesis' in window)) {
+      // Fallback timer for closed caption if TTS unsupported
+      this.captionTimeout = setTimeout(() => this.notifyCaption(null), 5000);
+      return;
+    }
 
     try {
       window.speechSynthesis.cancel(); // Stop any pending speech
@@ -63,9 +95,17 @@ class AudioAlertBroadcaster {
       utterance.volume = 0.9;
       utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
 
+      utterance.onend = () => {
+        this.captionTimeout = setTimeout(() => this.notifyCaption(null), 1500);
+      };
+      utterance.onerror = () => {
+        this.captionTimeout = setTimeout(() => this.notifyCaption(null), 1500);
+      };
+
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn('Speech synthesis unavailable:', e);
+      this.captionTimeout = setTimeout(() => this.notifyCaption(null), 4000);
     }
   }
 }
