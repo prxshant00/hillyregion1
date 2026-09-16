@@ -27,7 +27,7 @@ import {
   SitRepData,
   SensorNode
 } from './types';
-import { Filter, RefreshCw, SlidersHorizontal, Volume2, Clock } from 'lucide-react';
+import { Filter, RefreshCw, SlidersHorizontal, Volume2, Clock, ChevronLeft } from 'lucide-react';
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
@@ -45,6 +45,9 @@ export const App: React.FC = () => {
   const [sitrep, setSitrep] = useState<SitRepData | null>(null);
   const [sensors, setSensors] = useState<SensorNode[]>([]);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
+
+  // Responsive Mobile Tab Controller ('all' | 'map' | 'ward' | 'hydrograph')
+  const [mobileTab, setMobileTab] = useState<'all' | 'map' | 'ward' | 'hydrograph'>('all');
 
   // Modals & Panels State
   const [isValidationOpen, setIsValidationOpen] = useState(false);
@@ -576,10 +579,57 @@ export const App: React.FC = () => {
           </div>
         )}
 
+        {/* Mobile Segmented View Switcher (Visible on < lg screens) */}
+        <div className="lg:hidden flex items-center justify-between p-1 bg-slate-900/90 border border-slate-800 rounded-xl overflow-x-auto text-xs font-mono shadow-md gap-1">
+          <button
+            onClick={() => setMobileTab('all')}
+            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium ${
+              mobileTab === 'all'
+                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            All Views
+          </button>
+          <button
+            onClick={() => setMobileTab('map')}
+            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium ${
+              mobileTab === 'map'
+                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            🗺️ Map
+          </button>
+          <button
+            onClick={() => setMobileTab('ward')}
+            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium flex items-center justify-center space-x-1 ${
+              mobileTab === 'ward'
+                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span>⚡ Intel</span>
+            {selectedWardDetail && (
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse ml-0.5" />
+            )}
+          </button>
+          <button
+            onClick={() => setMobileTab('hydrograph')}
+            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium ${
+              mobileTab === 'hydrograph'
+                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            📊 Charts
+          </button>
+        </div>
+
         {/* Tactical Map and Detail Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Choropleth Map with Satellite Imagery (Left 7 Cols) */}
-          <div className="lg:col-span-7">
+          <div className={`lg:col-span-7 ${mobileTab === 'all' || mobileTab === 'map' ? 'block' : 'hidden lg:block'} space-y-3`}>
             <MapChoropleth
               wards={filteredWards}
               selectedWard={selectedWardDetail}
@@ -588,10 +638,47 @@ export const App: React.FC = () => {
               geoJsonData={geoJsonData}
               sensors={activeSensors}
             />
+
+            {/* Mobile Map Active Ward Banner */}
+            {selectedWardDetail && mobileTab === 'map' && (
+              <div className="lg:hidden bg-slate-900/95 border border-cyan-500/50 p-3 rounded-xl shadow-2xl flex items-center justify-between gap-3 animate-fadeIn">
+                <div>
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: selectedWardDetail.alert_color }} />
+                    <span>{selectedWardDetail.ward_name}</span>
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    Risk: <strong className="text-amber-400">{selectedWardDetail.risk_score.toFixed(0)}/100</strong> • Lead Time: <strong className="text-cyan-400">{selectedWardDetail.lead_time_hours}h</strong>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMobileTab('ward')}
+                  className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs font-mono min-h-[38px] whitespace-nowrap shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+                >
+                  Open Intel →
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Granular Ward Detail & Explainability (Right 5 Cols) */}
-          <div className="lg:col-span-5">
+          <div className={`lg:col-span-5 ${mobileTab === 'all' || mobileTab === 'ward' ? 'block' : 'hidden lg:block'} space-y-3`}>
+            {/* Mobile Back Button when in dedicated ward view */}
+            {mobileTab === 'ward' && (
+              <div className="lg:hidden flex items-center justify-between pb-1">
+                <button
+                  onClick={() => setMobileTab('map')}
+                  className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 text-cyan-300 text-xs font-mono border border-slate-700 active:scale-95"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back to Map View</span>
+                </button>
+                <span className="text-[10px] font-mono text-slate-400 uppercase">
+                  {selectedWardDetail?.district_name} District
+                </span>
+              </div>
+            )}
+
             <WardDetailPanel
               ward={selectedWardDetail}
               onTriggerAlert={handleTriggerAlert}
@@ -601,7 +688,19 @@ export const App: React.FC = () => {
         </div>
 
         {/* Time-Series Dynamic Hydrograph */}
-        <div>
+        <div className={mobileTab === 'all' || mobileTab === 'hydrograph' ? 'block' : 'hidden lg:block'}>
+          {mobileTab === 'hydrograph' && (
+            <div className="lg:hidden flex items-center justify-between pb-2">
+              <button
+                onClick={() => setMobileTab('map')}
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 text-cyan-300 text-xs font-mono border border-slate-700 active:scale-95"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Back to Map View</span>
+              </button>
+            </div>
+          )}
+
           <TimeSeriesChart
             points={historyPoints}
             wardName={selectedWardDetail?.ward_name || 'Selected Ward'}

@@ -92,6 +92,7 @@ export const MapChoropleth: React.FC<MapProps> = ({
   const [showEvents, setShowEvents] = useState<boolean>(true);
   const [showSensors, setShowSensors] = useState<boolean>(true);
   const [showRivers, setShowRivers] = useState<boolean>(true);
+  const [isMobileLegendOpen, setIsMobileLegendOpen] = useState<boolean>(false);
 
   // Tile layers definition (100% Free, Zero API Key / Billing Cost)
   const TILE_LAYERS = {
@@ -520,54 +521,70 @@ export const MapChoropleth: React.FC<MapProps> = ({
         </div>
       </div>
 
-      {/* Map Tactical Legend */}
-      <div
-        className="absolute bottom-4 left-4 z-20 bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-3 text-xs font-mono shadow-lg pointer-events-auto max-w-[310px]"
-        role="complementary"
-        aria-label="Risk classification legend"
-      >
-        <div className="text-[11px] font-bold tracking-wider text-slate-300 uppercase mb-2 flex items-center justify-between">
-          <span>Risk Classification</span>
-          <span className="text-[10px] text-cyan-400 uppercase font-mono">{activeLayer} Mode</span>
-        </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
-            <span className="text-slate-300">Normal (&lt;40)</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_6px_#eab308]" />
-            <span className="text-slate-300">Advisory (40-60)</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_6px_#f97316]" />
-            <span className="text-slate-300">Watch (60-80)</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_6px_#ef4444]" />
-            <span className="text-slate-300 font-bold">Warning (&gt;80)</span>
-          </div>
-        </div>
+      {/* Map Tactical Legend - Responsive: Collapsible on mobile (<sm), pinned on desktop (sm+) */}
+      <div className="absolute bottom-4 left-4 z-20 pointer-events-auto">
+        {/* Mobile Mini Toggle Button */}
+        <button
+          onClick={() => setIsMobileLegendOpen(!isMobileLegendOpen)}
+          className="sm:hidden flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 backdrop-blur-md border border-cyan-500/40 text-cyan-300 text-xs font-mono shadow-xl min-h-[38px] active:scale-95 transition-all"
+          aria-expanded={isMobileLegendOpen}
+          aria-label="Toggle Risk Classification Legend"
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+          <span>{isMobileLegendOpen ? 'Hide Legend' : 'Legend'}</span>
+        </button>
 
-        <div className="mt-2.5 pt-2 border-t border-slate-700/80 space-y-1 text-[10px] text-slate-300">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-cyan-300 font-semibold">
-              <span className="text-cyan-400">⚡</span> IoT Sonar Gauge
-            </span>
-            <span className="flex items-center gap-1 text-red-400 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-ping" /> 2025 Disaster Event
-            </span>
+        {/* Legend Card: Always visible on sm+, togglable on <sm */}
+        <div
+          className={`${
+            isMobileLegendOpen ? 'block' : 'hidden sm:block'
+          } mt-2 sm:mt-0 bg-tactical-surface/95 backdrop-blur-md border border-tactical-border rounded-xl p-3 text-xs font-mono shadow-2xl max-w-[290px] sm:max-w-[310px] animate-fadeIn`}
+          role="complementary"
+          aria-label="Risk classification legend"
+        >
+          <div className="text-[11px] font-bold tracking-wider text-slate-300 uppercase mb-2 flex items-center justify-between">
+            <span>Risk Classification</span>
+            <span className="text-[10px] text-cyan-400 uppercase font-mono">{activeLayer} Mode</span>
           </div>
-          <div className="flex items-center gap-2 pt-1">
-            <span className="flex items-center gap-1 text-cyan-300">
-              <span className="w-3 h-0.5 bg-[#38bdf8] inline-block" /> Beas
-            </span>
-            <span className="flex items-center gap-1 text-purple-300">
-              <span className="w-3 h-0.5 bg-[#a78bfa] inline-block" /> Parbati
-            </span>
-            <span className="flex items-center gap-1 text-emerald-300">
-              <span className="w-3 h-0.5 bg-[#34d399] inline-block" /> Tirthan
-            </span>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
+              <span className="text-slate-300">Normal (&lt;40)</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_6px_#eab308]" />
+              <span className="text-slate-300">Advisory (40-60)</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_6px_#f97316]" />
+              <span className="text-slate-300">Watch (60-80)</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_6px_#ef4444]" />
+              <span className="text-slate-300 font-bold">Warning (&gt;80)</span>
+            </div>
+          </div>
+
+          <div className="mt-2.5 pt-2 border-t border-slate-700/80 space-y-1 text-[10px] text-slate-300">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1 text-cyan-300 font-semibold">
+                <span className="text-cyan-400">⚡</span> IoT Sonar Gauge
+              </span>
+              <span className="flex items-center gap-1 text-red-400 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-ping" /> 2025 Disaster Event
+              </span>
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <span className="flex items-center gap-1 text-cyan-300">
+                <span className="w-3 h-0.5 bg-[#38bdf8] inline-block" /> Beas
+              </span>
+              <span className="flex items-center gap-1 text-purple-300">
+                <span className="w-3 h-0.5 bg-[#a78bfa] inline-block" /> Parbati
+              </span>
+              <span className="flex items-center gap-1 text-emerald-300">
+                <span className="w-3 h-0.5 bg-[#34d399] inline-block" /> Tirthan
+              </span>
+            </div>
           </div>
         </div>
       </div>
