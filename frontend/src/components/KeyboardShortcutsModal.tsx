@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Keyboard, Eye, Volume2, Search, Sliders, Shield, Bot } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const containerRef = useFocusTrap(isOpen);
+
   if (!isOpen) return null;
 
   const shortcuts = [
@@ -31,7 +34,10 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       aria-labelledby="shortcuts-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
     >
-      <div className="bg-tactical-surface border border-tactical-border rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+      <div
+        ref={containerRef}
+        className="bg-tactical-surface border border-tactical-border rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+      >
         {/* Header */}
         <div className="p-4 border-b border-tactical-border flex items-center justify-between bg-tactical-card">
           <div className="flex items-center space-x-2.5">

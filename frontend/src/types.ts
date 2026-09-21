@@ -244,3 +244,32 @@ export interface ApproveDirectiveResponse {
   message: string;
   digital_checksum: string;
 }
+
+export interface KiloOrchestrationResponse {
+  batch_id: string;
+  total_wards: number;
+  elapsed_wall_time_ms: number;
+  average_latency_ms: number;
+  concurrency_limit: number;
+  critical_breaches: number;
+  watch_alerts: number;
+  staged_directives_count: number;
+  results: AgentTriagePipelineResult[];
+  bottleneck_analysis: {
+    fastest_ward: string;
+    slowest_ward: string;
+    average_confidence_pct: number;
+    concurrency_efficiency_gain: number;
+  };
+  status: string;
+}
+
+export interface KiloStatusResponse {
+  engine_name: string;
+  max_concurrency: number;
+  active_tasks: number;
+  queue_mode: string;
+  supported_agents: string[];
+  healthy: boolean;
+}
+

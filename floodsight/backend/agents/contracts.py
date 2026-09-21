@@ -77,3 +77,27 @@ class ApproveDirectiveResponse(BaseModel):
     broadcast_timestamp: str
     message: str
     digital_checksum: str
+
+
+class KiloOrchestrationResponse(BaseModel):
+    batch_id: str
+    total_wards: int
+    elapsed_wall_time_ms: float
+    average_latency_ms: float
+    concurrency_limit: int
+    critical_breaches: int
+    watch_alerts: int
+    staged_directives_count: int
+    results: List[AgentTriagePipelineResult]
+    bottleneck_analysis: Dict[str, Any]
+    status: str = "COMPLETED"
+
+
+class KiloStatusResponse(BaseModel):
+    engine_name: str = "KiloParallelOrchestrator"
+    max_concurrency: int
+    active_tasks: int
+    queue_mode: str = "BOUNDED_ASYNCIO_SEMAPHORE"
+    supported_agents: List[str]
+    healthy: bool = True
+

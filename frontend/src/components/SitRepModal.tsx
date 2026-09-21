@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Printer, ShieldAlert, FileSpreadsheet } from 'lucide-react';
 import { SitRepData } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface SitRepModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface SitRepModalProps {
 }
 
 export const SitRepModal: React.FC<SitRepModalProps> = ({ isOpen, onClose, sitrep }) => {
+  const containerRef = useFocusTrap(isOpen);
   const { t } = useTranslation();
 
   if (!isOpen || !sitrep) return null;
@@ -35,7 +37,10 @@ export const SitRepModal: React.FC<SitRepModalProps> = ({ isOpen, onClose, sitre
       aria-labelledby="sitrep-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn"
     >
-      <div className="bg-tactical-surface border border-tactical-border rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden print:max-h-none print:w-full print:border-none print:shadow-none">
+      <div
+        ref={containerRef}
+        className="bg-tactical-surface border border-tactical-border rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden print:max-h-none print:w-full print:border-none print:shadow-none"
+      >
         {/* Header */}
         <div className="p-5 border-b border-tactical-border flex items-center justify-between bg-tactical-card print:hidden">
           <div className="flex items-center space-x-3">

@@ -438,3 +438,33 @@ async def approve_agent_directive(payload: dict):
         return agent_orchestrator.approve_directive(req)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Authorization gate failed: {str(e)}")
+
+
+@router.post("/agents/kilo/orchestrate")
+async def orchestrate_kilo_parallel_sweep(
+    district: Optional[str] = Query(default=None, description="Optional district filter (Mandi, Kullu, Kangra)"),
+    concurrency: Optional[int] = Query(default=10, ge=1, le=20, description="Parallel worker concurrency limit")
+):
+    """
+    Kilo Parallel Multi-Agent Orchestrator:
+    Simultaneously executes Sentinel -> Reasoner -> Commander across all catchments in parallel.
+    """
+    from floodsight.backend.agents.kilo_orchestrator import kilo_orchestrator
+    try:
+        response = await kilo_orchestrator.orchestrate_catchment_sweep(
+            district_filter=district,
+            concurrency_limit=concurrency
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Kilo parallel orchestration failed: {str(e)}")
+
+
+@router.get("/agents/kilo/status")
+async def get_kilo_orchestrator_status():
+    """
+    Returns telemetry, worker capacity, and health status for Kilo Parallel Orchestrator.
+    """
+    from floodsight.backend.agents.kilo_orchestrator import kilo_orchestrator
+    return kilo_orchestrator.get_status()
+

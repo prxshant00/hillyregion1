@@ -19,6 +19,7 @@ import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { AgentTriageModal } from './components/AgentTriageModal';
 import { TopographicElevationRibbon } from './components/TopographicElevationRibbon';
 import { alertBroadcaster } from './utils/audioAlert';
+import { liveAnnouncer } from './utils/announcer';
 import { useLiveTelemetry } from './hooks/useLiveTelemetry';
 import { DIGITAL_TWIN_STEPS, applyDigitalTwinStep } from './services/digitalTwinSimulator';
 import {
@@ -109,14 +110,18 @@ export const App: React.FC = () => {
 
   const handleCycleTextScale = () => {
     setTextScale(prev => {
-      if (prev === 'normal') return 'large';
-      if (prev === 'large') return 'xlarge';
-      return 'normal';
+      const next = prev === 'normal' ? 'large' : prev === 'large' ? 'xlarge' : 'normal';
+      liveAnnouncer.announce(`Text scale changed to ${next}`, 'polite');
+      return next;
     });
   };
 
   const handleToggleHighContrast = () => {
-    setIsHighContrast(prev => !prev);
+    setIsHighContrast(prev => {
+      const next = !prev;
+      liveAnnouncer.announce(next ? 'High contrast mode enabled' : 'High contrast mode disabled', 'polite');
+      return next;
+    });
   };
 
   // Global Keyboard Shortcuts Handler
@@ -223,6 +228,10 @@ export const App: React.FC = () => {
         if (detailRes.ok) {
           const detail = await detailRes.json();
           setSelectedWardDetail(detail);
+          liveAnnouncer.announce(
+            `Selected ward: ${detail.ward_name}. Risk score: ${detail.risk_score} of 100. Alert level: ${detail.alert_level}. Lead time: ${detail.lead_time_hours} hours.`,
+            'polite'
+          );
         }
 
         const histRes = await fetch(`/api/v1/history/${selectedWardId}?hours=48`);

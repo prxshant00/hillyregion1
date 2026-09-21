@@ -1,11 +1,19 @@
 # ==============================================================================
-# FloodSight Early Warning System — High-Concurrency FastAPI Backend
-# Containerized with Kilo Parallel Multi-Agent Orchestration Engine
+# FloodSight All-in-One Standalone Production Container
+# Builds Frontend & Runs High-Concurrency FastAPI Backend (Uvicorn Multi-Worker)
 # ==============================================================================
 
-FROM python:3.12-slim
+# Stage 1: Build Frontend Assets
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci --prefer-offline --no-audit
+COPY frontend/ ./
+RUN npm run build
 
-# Prevent Python from writing .pyc files and enable unbuffered output for real-time logs
+# Stage 2: Production Python Runtime
+FROM python:3.12-slim AS runner
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
@@ -14,29 +22,28 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies & curl for container health check
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy backend codebase, agent orchestrator, and tests
+# Copy backend application
 COPY floodsight/ /app/floodsight/
 COPY tests/ /app/tests/
 COPY api/ /app/api/
 COPY kilo.config.json /app/kilo.config.json
 
-# Health check verifies API and Kilo engine readiness
+# Copy compiled frontend assets
+COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+
 HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 EXPOSE 8000
 
-# Run Uvicorn with multiple workers for high-concurrency request handling
 CMD ["sh", "-c", "uvicorn floodsight.backend.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS}"]

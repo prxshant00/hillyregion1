@@ -330,5 +330,30 @@ def test_agent_directive_hitl_approval():
     assert dismiss_data["status"] == "DISMISSED"
 
 
+def test_kilo_orchestrator_status_endpoint():
+    resp = client.get("/api/v1/agents/kilo/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["engine_name"] == "KiloParallelOrchestrator"
+    assert data["healthy"] is True
+    assert data["max_concurrency"] >= 5
+    assert len(data["supported_agents"]) == 3
+
+
+def test_kilo_parallel_catchment_sweep():
+    # Test parallel sweep for Mandi district wards
+    resp = client.post("/api/v1/agents/kilo/orchestrate?district=Mandi&concurrency=8")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "COMPLETED"
+    assert data["total_wards"] >= 8
+    assert data["elapsed_wall_time_ms"] > 0
+    assert data["concurrency_limit"] == 8
+    assert len(data["results"]) == data["total_wards"]
+    assert "bottleneck_analysis" in data
+    assert "concurrency_efficiency_gain" in data["bottleneck_analysis"]
+
+
+
 
 
