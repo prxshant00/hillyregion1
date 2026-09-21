@@ -16,6 +16,8 @@ import { RiverCascadeModal } from './components/RiverCascadeModal';
 import { CAPModal } from './components/CAPModal';
 import { ExportDataModal } from './components/ExportDataModal';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { AgentTriageModal } from './components/AgentTriageModal';
+import { TopographicElevationRibbon } from './components/TopographicElevationRibbon';
 import { alertBroadcaster } from './utils/audioAlert';
 import { useLiveTelemetry } from './hooks/useLiveTelemetry';
 import { DIGITAL_TWIN_STEPS, applyDigitalTwinStep } from './services/digitalTwinSimulator';
@@ -60,6 +62,7 @@ export const App: React.FC = () => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isAgentTriageOpen, setIsAgentTriageOpen] = useState(false);
   const [showSandbox, setShowSandbox] = useState(false);
   const [showDigitalTwin, setShowDigitalTwin] = useState(false);
   const [twinStepIndex, setTwinStepIndex] = useState(0);
@@ -133,6 +136,9 @@ export const App: React.FC = () => {
       } else if (e.altKey && e.key.toLowerCase() === 's') {
         e.preventDefault();
         setIsSitRepOpen(prev => !prev);
+      } else if (e.altKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        setIsAgentTriageOpen(prev => !prev);
       } else if (e.key === '?' && !isInput) {
         e.preventDefault();
         setIsShortcutsOpen(prev => !prev);
@@ -153,6 +159,7 @@ export const App: React.FC = () => {
         setIsCAPOpen(false);
         setIsExportOpen(false);
         setIsShortcutsOpen(false);
+        setIsAgentTriageOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -315,11 +322,16 @@ export const App: React.FC = () => {
   // Simulate Cloudburst Surge for testing
   const handleSimulateSurge = async (wardId: string) => {
     try {
+      // Derive sensor node_id from ward_id using backend naming convention:
+      // HP-MND-01 -> ESP32-MND-01, HP-KLU-01 -> ESP32-KLU-01, etc.
+      const loc = wardId.substring(3, 6);   // MND, KLU, KNG
+      const num = wardId.substring(7, 9);   // 01, 02, etc.
+      const nodeId = `ESP32-${loc}-${num}`;
       await fetch('/api/v1/ingest/sensor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          node_id: `ESP32-DEMO-${wardId}`,
+          node_id: nodeId,
           ward_id: wardId,
           source: 'sensor',
           water_level_cm: 475.0,
@@ -457,14 +469,15 @@ export const App: React.FC = () => {
         textScale={textScale}
         onCycleTextScale={handleCycleTextScale}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        onOpenAgentTriage={() => setIsAgentTriageOpen(true)}
       />
 
       {/* Main Content Area */}
       <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5 focus:outline-none" role="main">
         {/* KPI Strip & District Selector */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-tactical-surface border border-tactical-border rounded-xl p-4 shadow-md">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#1c232d] border border-[#2d3744] rounded p-3 text-left">
           {/* District Filter Buttons */}
-          <div className="flex items-center space-x-2 overflow-x-auto pb-1 lg:pb-0" role="tablist" aria-label="District Filter">
+          <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 lg:pb-0" role="tablist" aria-label="District Filter">
             <Filter className="w-4 h-4 text-slate-400 mr-1 flex-shrink-0" aria-hidden="true" />
             {['All', 'Mandi', 'Kullu', 'Kangra'].map((dist, idx) => (
               <button
@@ -472,10 +485,10 @@ export const App: React.FC = () => {
                 role="tab"
                 aria-selected={selectedDistrict === dist}
                 onClick={() => setSelectedDistrict(dist)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                className={`px-2.5 py-1 rounded text-xs font-mono font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] ${
                   selectedDistrict === dist
-                    ? 'bg-cyan-500 text-black font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]'
-                    : 'bg-tactical-card hover:bg-slate-700 text-slate-300 border border-tactical-border'
+                    ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
+                    : 'bg-[#212934] hover:bg-[#2d3744] text-slate-300 border border-[#2d3744]'
                 }`}
                 aria-label={`Filter by ${dist} District (Press ${idx + 1})`}
               >
@@ -489,23 +502,23 @@ export const App: React.FC = () => {
           <div className="flex items-center flex-wrap gap-3 text-xs font-mono">
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Monitored</span>
-              <strong className="text-sm text-white">{totalWards} Units</strong>
+              <strong className="text-sm text-[#e6edf3]">{totalWards} Wards</strong>
             </div>
 
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase">Warning/Watch</span>
-              <strong className="text-sm text-red-400 font-bold">{criticalCount} Active</strong>
+              <span className="text-slate-400 block text-[10px] uppercase">Watch / Warning</span>
+              <strong className="text-sm text-[#dc2626] font-bold">{criticalCount} Active</strong>
             </div>
 
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Mean Risk</span>
-              <strong className="text-sm text-amber-300">{meanScore} / 100</strong>
+              <strong className="text-sm text-[#b45309]">{meanScore} / 100</strong>
             </div>
 
             {/* SSE Live Telemetry Feed Badge */}
-            <div className="flex items-center space-x-1.5 text-[10px] font-mono px-2 py-1.5 rounded bg-slate-900 border border-slate-800">
-              <span className={`w-2 h-2 rounded-full ${isSSEConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
-              <span className="text-slate-300 hidden sm:inline">{isSSEConnected ? 'SSE Live Stream' : 'Telemetry Feed'}</span>
+            <div className="flex items-center space-x-1.5 text-[10px] font-mono px-2 py-1 rounded bg-[#212934] border border-[#2d3744]">
+              <span className={`w-2 h-2 rounded-full ${isSSEConnected ? 'bg-[#15803d]' : 'bg-slate-500'}`} />
+              <span className="text-slate-300 hidden sm:inline">{isSSEConnected ? 'SSE Live Feed' : 'Telemetry Link'}</span>
             </div>
 
             {/* 4D Digital Twin Time-Lapse Toggle */}
@@ -514,14 +527,14 @@ export const App: React.FC = () => {
                 setShowDigitalTwin(!showDigitalTwin);
                 if (showSandbox) setShowSandbox(false);
               }}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-mono focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded border transition-colors text-xs font-mono focus-visible:outline-2 focus-visible:outline-[#0284c7] ${
                 showDigitalTwin
-                  ? 'bg-cyan-950 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-                  : 'bg-tactical-card border-tactical-border text-slate-300 hover:bg-slate-700'
+                  ? 'bg-[#243038] border-[#0284c7] text-[#0284c7] font-bold'
+                  : 'bg-[#212934] border-[#2d3744] text-slate-300 hover:bg-[#2d3744]'
               }`}
               aria-expanded={showDigitalTwin}
             >
-              <Clock className="w-3.5 h-3.5 text-cyan-400" />
+              <Clock className="w-3.5 h-3.5 text-slate-300" />
               <span>4D Digital Twin</span>
             </button>
 
@@ -531,15 +544,15 @@ export const App: React.FC = () => {
                 setShowSandbox(!showSandbox);
                 if (showDigitalTwin) setShowDigitalTwin(false);
               }}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-mono focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded border transition-colors text-xs font-mono focus-visible:outline-2 focus-visible:outline-[#0284c7] ${
                 showSandbox
-                  ? 'bg-cyan-950 border-cyan-500 text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
-                  : 'bg-tactical-card border-tactical-border text-slate-300 hover:bg-slate-700'
+                  ? 'bg-[#243038] border-[#b45309] text-[#b45309] font-bold'
+                  : 'bg-[#212934] border-[#2d3744] text-slate-300 hover:bg-[#2d3744]'
               }`}
               aria-expanded={showSandbox}
               aria-controls="simulation-sandbox-panel"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-300" aria-hidden="true" />
               <span className="hidden sm:inline">Simulate Cloudburst</span>
               <span className="sm:hidden">Simulate</span>
             </button>
@@ -548,11 +561,11 @@ export const App: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-2 rounded-lg bg-tactical-card border border-tactical-border hover:bg-slate-700 text-slate-300 transition-all focus-visible:ring-2 focus-visible:ring-cyan-400"
+              className="p-1.5 rounded bg-[#212934] border border-[#2d3744] hover:bg-[#2d3744] text-slate-300 transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7]"
               title="Refresh Ingestion Feeds"
               aria-label="Refresh Satellite and Ingestion Data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-400' : ''}`} aria-hidden="true" />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0284c7]' : ''}`} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -616,18 +629,18 @@ export const App: React.FC = () => {
           </button>
           <button
             onClick={() => setMobileTab('hydrograph')}
-            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium ${
+            className={`flex-1 py-1.5 px-2 rounded text-center transition-colors min-h-[36px] whitespace-nowrap font-medium ${
               mobileTab === 'hydrograph'
-                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                ? 'bg-[#0284c7] text-white font-bold'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            📊 Charts
+            Charts
           </button>
         </div>
 
         {/* Tactical Map and Detail Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Choropleth Map with Satellite Imagery (Left 7 Cols) */}
           <div className={`lg:col-span-7 ${mobileTab === 'all' || mobileTab === 'map' ? 'block' : 'hidden lg:block'} space-y-3`}>
             <MapChoropleth
@@ -641,21 +654,21 @@ export const App: React.FC = () => {
 
             {/* Mobile Map Active Ward Banner */}
             {selectedWardDetail && mobileTab === 'map' && (
-              <div className="lg:hidden bg-slate-900/95 border border-cyan-500/50 p-3 rounded-xl shadow-2xl flex items-center justify-between gap-3 animate-fadeIn">
+              <div className="lg:hidden bg-[#1c232d] border border-[#2d3744] p-2.5 rounded shadow-lg flex items-center justify-between gap-3 animate-fadeIn">
                 <div>
                   <div className="text-xs font-bold text-white flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: selectedWardDetail.alert_color }} />
                     <span>{selectedWardDetail.ward_name}</span>
                   </div>
                   <div className="text-[11px] font-mono text-slate-400">
-                    Risk: <strong className="text-amber-400">{selectedWardDetail.risk_score.toFixed(0)}/100</strong> • Lead Time: <strong className="text-cyan-400">{selectedWardDetail.lead_time_hours}h</strong>
+                    Risk: <strong className="text-[#b45309]">{selectedWardDetail.risk_score.toFixed(0)}/100</strong> • Lead Time: <strong className="text-[#0284c7]">{selectedWardDetail.lead_time_hours}h</strong>
                   </div>
                 </div>
                 <button
                   onClick={() => setMobileTab('ward')}
-                  className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs font-mono min-h-[38px] whitespace-nowrap shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+                  className="px-2.5 py-1 rounded bg-[#0284c7] text-white font-bold text-xs font-mono min-h-[34px] whitespace-nowrap"
                 >
-                  Open Intel →
+                  Inspect Ward
                 </button>
               </div>
             )}
@@ -668,7 +681,7 @@ export const App: React.FC = () => {
               <div className="lg:hidden flex items-center justify-between pb-1">
                 <button
                   onClick={() => setMobileTab('map')}
-                  className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 text-cyan-300 text-xs font-mono border border-slate-700 active:scale-95"
+                  className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[#212934] text-slate-200 text-xs font-mono border border-[#2d3744]"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Back to Map View</span>
@@ -683,8 +696,17 @@ export const App: React.FC = () => {
               ward={selectedWardDetail}
               onTriggerAlert={handleTriggerAlert}
               onSimulateSurge={handleSimulateSurge}
+              onSelectSector={(wardId) => setSelectedWardId(wardId)}
             />
           </div>
+        </div>
+
+        {/* The Single Bold Centerpiece: Topographic Hydraulic Elevation Ribbon */}
+        <div className={mobileTab === 'all' || mobileTab === 'map' ? 'block' : 'hidden lg:block'}>
+          <TopographicElevationRibbon
+            selectedWardId={selectedWardId}
+            onSelectWard={(wardId) => setSelectedWardId(wardId)}
+          />
         </div>
 
         {/* Time-Series Dynamic Hydrograph */}
@@ -693,7 +715,7 @@ export const App: React.FC = () => {
             <div className="lg:hidden flex items-center justify-between pb-2">
               <button
                 onClick={() => setMobileTab('map')}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 text-cyan-300 text-xs font-mono border border-slate-700 active:scale-95"
+                className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[#212934] text-slate-200 text-xs font-mono border border-[#2d3744]"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Back to Map View</span>
@@ -709,8 +731,8 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-tactical-border py-4 px-6 text-center text-xs font-mono text-slate-500 bg-tactical-surface/50">
-        FloodSight SIH26192 • Ministry of Home Affairs / NDRF Early Warning Initiative • Satellite Imagery powered by Esri World Imagery (0 API Cost).
+      <footer className="border-t border-[#2d3744] py-3.5 px-4 text-center text-xs font-mono text-slate-400 bg-[#161b22]">
+        FloodSight SIH26192 • Ministry of Home Affairs / NDRF Early Warning Initiative • Satellite Dem & Esri World Topo.
       </footer>
 
       {/* Modals & Dialogs */}
@@ -775,6 +797,14 @@ export const App: React.FC = () => {
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      <AgentTriageModal
+        isOpen={isAgentTriageOpen}
+        onClose={() => setIsAgentTriageOpen(false)}
+        selectedWardId={selectedWardId}
+        wards={wards}
+        onSelectWard={(wardId) => setSelectedWardId(wardId)}
       />
     </div>
   );

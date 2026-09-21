@@ -273,4 +273,62 @@ def test_stream_telemetry_endpoint():
     assert "text/event-stream" in resp.headers["content-type"]
 
 
+def test_agent_triage_pipeline():
+    resp = client.post("/api/v1/agents/triage/run?ward_id=HP-MND-02")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "pipeline_id" in data
+    assert data["ward_id"] == "HP-MND-02"
+    assert len(data["execution_trace"]) >= 6
+    # Verify 3 agents acted: IngestionSentinel, HydrologyReasoner, DispatchCommander
+    agent_names = {s["agent_name"] for s in data["execution_trace"]}
+    assert "IngestionSentinel" in agent_names
+    assert "HydrologyReasoner" in agent_names
+    assert "DispatchCommander" in agent_names
+
+    # Check telemetry audit & hydrology dossier
+    assert "telemetry_audit" in data
+    assert "confidence_score" in data["telemetry_audit"]
+    assert "hydrology_dossier" in data
+    assert "composite_risk_score" in data["hydrology_dossier"]
+    assert "directive" in data
+    assert data["directive"] is not None
+    assert "directive_id" in data["directive"]
+
+
+def test_agent_directive_hitl_approval():
+    # 1. First run triage to generate a staged directive
+    triage_resp = client.post("/api/v1/agents/triage/run?ward_id=HP-MND-01")
+    assert triage_resp.status_code == 200
+    triage_data = triage_resp.json()
+    directive_id = triage_data["directive"]["directive_id"]
+
+    # 2. Approve the staged directive
+    approve_payload = {
+        "directive_id": directive_id,
+        "ward_id": "HP-MND-01",
+        "commander_callsign": "NDRF-COMMANDER-01",
+        "action": "APPROVE"
+    }
+    resp = client.post("/api/v1/agents/triage/approve", json=approve_payload)
+    assert resp.status_code == 200
+    approval_data = resp.json()
+    assert approval_data["directive_id"] == directive_id
+    assert approval_data["status"] == "TRANSMITTED_TO_SACHET"
+    assert "NDRF-SIG-" in approval_data["digital_checksum"]
+
+    # 3. Dismiss flow test
+    dismiss_payload = {
+        "directive_id": directive_id,
+        "ward_id": "HP-MND-01",
+        "commander_callsign": "NDRF-COMMANDER-01",
+        "action": "DISMISS"
+    }
+    resp_dismiss = client.post("/api/v1/agents/triage/approve", json=dismiss_payload)
+    assert resp_dismiss.status_code == 200
+    dismiss_data = resp_dismiss.json()
+    assert dismiss_data["status"] == "DISMISSED"
+
+
+
 

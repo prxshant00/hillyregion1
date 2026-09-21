@@ -6,7 +6,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6.svg)](https://www.typescriptlang.org/)
-[![Tests Passing](https://img.shields.io/badge/tests-35%20passed%20(100%25)-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-37%20passed%20(100%25)-brightgreen.svg)]()
 [![WCAG 2.1](https://img.shields.io/badge/a11y-WCAG%202.1%20AA%2FAAA-purple.svg)]()
 
 > **Smart India Hackathon 2026 — Problem Statement SIH26192**  
@@ -128,6 +128,12 @@ flowchart TB
   - **Tabular CSV**: Formatted spreadsheet of all 20 monitored wards with rainfall, slope, elevation, and directives.
   - **NDMA CAP XML**: Standard emergency alert XML file.
 
+### I. Autonomous Multi-Agent Triage Pipeline (HITL Safety Gate)
+- **IngestionSentinel**: Validates LoRaWAN 868MHz sensor packet SNR, battery decay, and tilt drift anomalies.
+- **HydrologyReasoner**: Evaluates physical Geological Survey of India (GSI) intensity-duration rainfall thresholds ($I = 14.82 \cdot D^{-0.39}$) and Manning channel surge propagation velocities.
+- **DispatchCommander**: Synthesizes OASIS CAP-India XML payload and bilingual Hindi/English emergency warning directives.
+- **Human-in-the-Loop (HITL) Safety Interlock**: Halts autonomous execution during high severity conditions. Staged directives require cryptographic Incident Commander sign-off before transmission to SACHET.
+
 ---
 
 ## 4. Strict Metric Transparency: Academic Precedent vs. Measured Holdout
@@ -161,6 +167,8 @@ To maintain scientific and engineering integrity, FloodSight strictly demarcates
 | `GET` | `/api/v1/alerts/cap.xml` | NDMA-standard OASIS CAP v1.2 emergency alert XML feed. |
 | `GET` | `/api/v1/alerts/cap.json` | NDMA-standard OASIS CAP v1.2 emergency alert JSON feed. |
 | `GET` | `/api/v1/hydrology/id-curve/{ward_id}` | Rainfall Intensity-Duration threshold curve based on GSI/CWC formula. |
+| `POST` | `/api/v1/agents/triage/run` | Executes 3-agent autonomous triage pipeline (Sentinel $\to$ Reasoner $\to$ Commander). |
+| `POST` | `/api/v1/agents/triage/approve` | Human-in-the-Loop authorization gate for staged emergency directives. |
 | `GET` | `/api/v1/metrics` | Prometheus observability metrics format for Grafana / Ops scrapers. |
 | `GET` | `/api/v1/stream/telemetry` | Server-Sent Events (SSE) real-time ultrasonic sensor stream. |
 | `GET` | `/api/v1/sensors` | Real-time telemetry feed from all ultrasonic river gauge nodes. |
@@ -189,7 +197,7 @@ cd hillyregion1
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Run backend test suite (33 tests)
+# Run backend test suite (37 tests)
 pytest tests/ -v
 
 # Start FastAPI development server

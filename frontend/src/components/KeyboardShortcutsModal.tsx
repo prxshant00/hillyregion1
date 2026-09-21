@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Keyboard, Eye, Volume2, Search, Sliders, Shield } from 'lucide-react';
+import { X, Keyboard, Eye, Volume2, Search, Sliders, Shield, Bot } from 'lucide-react';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -15,10 +15,11 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   const shortcuts = [
     { key: 'Ctrl + K', desc: 'Open Quick Ward Search Palette', icon: Search },
     { key: '?', desc: 'Open / Close this Keyboard Shortcuts Guide', icon: Keyboard },
+    { key: 'Alt + A', desc: 'Open Autonomous AI Multi-Agent Triage (HITL Gate)', icon: Bot },
+    { key: 'Alt + S', desc: 'Open Official NDRF SITREP Document', icon: Shield },
     { key: 'Alt + C', desc: 'Toggle High-Contrast / Sunlight Mode', icon: Eye },
     { key: 'Alt + T', desc: 'Cycle Text Size (Standard → Large → X-Large)', icon: Sliders },
     { key: 'Alt + V', desc: 'Toggle Spoken Voice Siren & Broadcasts', icon: Volume2 },
-    { key: 'Alt + S', desc: 'Open Official NDRF SITREP Document', icon: Shield },
     { key: '1, 2, 3, 4', desc: 'Filter District (1: All, 2: Mandi, 3: Kullu, 4: Kangra)', icon: Keyboard },
     { key: 'Esc', desc: 'Close any active modal or dialog', icon: Keyboard }
   ];

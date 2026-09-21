@@ -1,0 +1,22 @@
+{
+  "entries": [
+    {
+      "path": "~/.gemini/config/skills/backend-dev-guidelines"
+    },
+    {
+      "path": "~/.gemini/config/skills/3d-web-experience"
+    },
+    {
+      "path": "~/.gemini/config/skills/agent-evaluation"
+    },
+    {
+      "path": "~/.gemini/config/skills/dotnet-backend-patterns"
+    },
+    {
+      "path": "~/.gemini/config/skills/llm-app-patterns"
+    }
+  ],
+  "inherits": [],
+  "exclude": [],
+  "include_only": []
+}

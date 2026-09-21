@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { WardRisk, ValidationEvent, SensorNode } from '../types';
-import { Layers, Compass, Eye, Mountain, Radio, Waves } from 'lucide-react';
+import { Layers, Eye, Mountain } from 'lucide-react';
 
 interface MapProps {
   wards: WardRisk[];
@@ -429,24 +429,24 @@ export const MapChoropleth: React.FC<MapProps> = ({
   }, [selectedWard?.ward_id]);
 
   return (
-    <div className="relative w-full h-[580px] rounded-xl overflow-hidden border border-tactical-border shadow-2xl bg-slate-950">
+    <div className="relative w-full h-[580px] rounded overflow-hidden border border-[#2d3744] bg-[#161b22]">
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 
       {/* Floating Controls Overlay (Top Right) */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col items-end space-y-2 pointer-events-auto">
+      <div className="absolute top-3 right-3 z-20 flex flex-col items-end space-y-2 pointer-events-auto">
         {/* Layer Switcher (Satellite, Dark, Topo) */}
         <div
           role="group"
           aria-label="Map Base Layer Switcher"
-          className="bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-1 flex items-center space-x-1 shadow-xl"
+          className="bg-[#1c232d] border border-[#2d3744] rounded p-1 flex items-center space-x-1 shadow-md"
         >
           <button
             onClick={() => handleLayerSwitch('satellite')}
-            className={`px-2.5 py-1.5 rounded-md text-xs font-mono flex items-center space-x-1.5 transition-all ${
+            className={`px-2 py-1 rounded text-xs font-mono flex items-center space-x-1.5 transition-colors ${
               activeLayer === 'satellite'
-                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_10px_rgba(6,182,212,0.5)]'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
+                : 'text-slate-300 hover:bg-[#212934]'
             }`}
             aria-label="Switch to Satellite Imagery Layer (ESRI World Imagery)"
             title="High-Resolution Satellite Imagery (0 API Cost)"
@@ -457,10 +457,10 @@ export const MapChoropleth: React.FC<MapProps> = ({
 
           <button
             onClick={() => handleLayerSwitch('dark')}
-            className={`px-2.5 py-1.5 rounded-md text-xs font-mono flex items-center space-x-1.5 transition-all ${
+            className={`px-2 py-1 rounded text-xs font-mono flex items-center space-x-1.5 transition-colors ${
               activeLayer === 'dark'
-                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_10px_rgba(6,182,212,0.5)]'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
+                : 'text-slate-300 hover:bg-[#212934]'
             }`}
             aria-label="Switch to Tactical Dark Map Layer"
             title="Tactical Dark Canvas (0 API Cost)"
@@ -471,10 +471,10 @@ export const MapChoropleth: React.FC<MapProps> = ({
 
           <button
             onClick={() => handleLayerSwitch('topo')}
-            className={`px-2.5 py-1.5 rounded-md text-xs font-mono flex items-center space-x-1.5 transition-all ${
+            className={`px-2 py-1 rounded text-xs font-mono flex items-center space-x-1.5 transition-colors ${
               activeLayer === 'topo'
-                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_10px_rgba(6,182,212,0.5)]'
-                : 'text-slate-300 hover:bg-slate-800'
+                ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
+                : 'text-slate-300 hover:bg-[#212934]'
             }`}
             aria-label="Switch to Topographic Contours Map Layer (OpenTopoMap)"
             title="Topographical Contours (0 API Cost)"
@@ -485,16 +485,15 @@ export const MapChoropleth: React.FC<MapProps> = ({
         </div>
 
         {/* Feature Toggles (Rivers, Sensors, Events) */}
-        <div className="bg-tactical-surface/90 backdrop-blur-md border border-tactical-border rounded-lg p-2 flex items-center space-x-3 text-xs font-mono shadow-xl flex-wrap gap-y-1">
+        <div className="bg-[#1c232d] border border-[#2d3744] rounded p-1.5 flex items-center space-x-3 text-xs font-mono shadow-md flex-wrap gap-y-1">
           <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
             <input
               type="checkbox"
               checked={showRivers}
               onChange={(e) => setShowRivers(e.target.checked)}
-              className="accent-cyan-400 rounded cursor-pointer"
+              className="accent-[#0284c7] rounded cursor-pointer"
             />
-            <Waves className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Rivers (3)</span>
+            <span>Rivers</span>
           </label>
 
           <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
@@ -502,10 +501,9 @@ export const MapChoropleth: React.FC<MapProps> = ({
               type="checkbox"
               checked={showSensors}
               onChange={(e) => setShowSensors(e.target.checked)}
-              className="accent-cyan-500 rounded cursor-pointer"
+              className="accent-[#0284c7] rounded cursor-pointer"
             />
-            <Radio className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Sensors ({sensors.length})</span>
+            <span>IoT Sonar</span>
           </label>
 
           <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
@@ -513,75 +511,73 @@ export const MapChoropleth: React.FC<MapProps> = ({
               type="checkbox"
               checked={showEvents}
               onChange={(e) => setShowEvents(e.target.checked)}
-              className="accent-red-500 rounded cursor-pointer"
+              className="accent-[#dc2626] rounded cursor-pointer"
             />
-            <Compass className="w-3.5 h-3.5 text-red-400" />
             <span>2025 Events</span>
           </label>
         </div>
       </div>
 
-      {/* Map Tactical Legend - Responsive: Collapsible on mobile (<sm), pinned on desktop (sm+) */}
-      <div className="absolute bottom-4 left-4 z-20 pointer-events-auto">
-        {/* Mobile Mini Toggle Button */}
+      {/* Floating Legend Overlay (Bottom Left) */}
+      <div className="absolute bottom-3 left-3 z-20 pointer-events-auto">
+        {/* Mobile Toggle Button (<sm) */}
         <button
           onClick={() => setIsMobileLegendOpen(!isMobileLegendOpen)}
-          className="sm:hidden flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 backdrop-blur-md border border-cyan-500/40 text-cyan-300 text-xs font-mono shadow-xl min-h-[38px] active:scale-95 transition-all"
+          className="sm:hidden flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#1c232d] border border-[#2d3744] text-slate-300 text-xs font-mono shadow-md min-h-[34px]"
           aria-expanded={isMobileLegendOpen}
-          aria-label="Toggle Risk Classification Legend"
+          aria-label="Toggle Risk Legend"
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-          <span>{isMobileLegendOpen ? 'Hide Legend' : 'Legend'}</span>
+          <span>Legend</span>
         </button>
 
         {/* Legend Card: Always visible on sm+, togglable on <sm */}
         <div
           className={`${
             isMobileLegendOpen ? 'block' : 'hidden sm:block'
-          } mt-2 sm:mt-0 bg-tactical-surface/95 backdrop-blur-md border border-tactical-border rounded-xl p-3 text-xs font-mono shadow-2xl max-w-[290px] sm:max-w-[310px] animate-fadeIn`}
+          } mt-2 sm:mt-0 bg-[#1c232d] border border-[#2d3744] rounded p-2.5 text-xs font-mono shadow-lg max-w-[290px] sm:max-w-[310px] animate-fadeIn`}
           role="complementary"
           aria-label="Risk classification legend"
         >
           <div className="text-[11px] font-bold tracking-wider text-slate-300 uppercase mb-2 flex items-center justify-between">
             <span>Risk Classification</span>
-            <span className="text-[10px] text-cyan-400 uppercase font-mono">{activeLayer} Mode</span>
+            <span className="text-[10px] text-slate-400 uppercase font-mono">{activeLayer} Mode</span>
           </div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
             <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
               <span className="text-slate-300">Normal (&lt;40)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_6px_#eab308]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
               <span className="text-slate-300">Advisory (40-60)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_6px_#f97316]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
               <span className="text-slate-300">Watch (60-80)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_6px_#ef4444]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
               <span className="text-slate-300 font-bold">Warning (&gt;80)</span>
             </div>
           </div>
 
-          <div className="mt-2.5 pt-2 border-t border-slate-700/80 space-y-1 text-[10px] text-slate-300">
+          <div className="mt-2 pt-2 border-t border-[#2d3744] space-y-1 text-[10px] text-slate-300">
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1 text-cyan-300 font-semibold">
-                <span className="text-cyan-400">⚡</span> IoT Sonar Gauge
+              <span className="flex items-center gap-1 text-[#0284c7] font-semibold">
+                <span>⚡</span> IoT Sonar Gauge
               </span>
-              <span className="flex items-center gap-1 text-red-400 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-ping" /> 2025 Disaster Event
+              <span className="flex items-center gap-1 text-[#dc2626] font-semibold">
+                <span className="w-2 h-2 rounded-full bg-[#dc2626] inline-block animate-ping" /> 2025 Disaster Event
               </span>
             </div>
             <div className="flex items-center gap-2 pt-1">
-              <span className="flex items-center gap-1 text-cyan-300">
+              <span className="flex items-center gap-1 text-[#38bdf8]">
                 <span className="w-3 h-0.5 bg-[#38bdf8] inline-block" /> Beas
               </span>
-              <span className="flex items-center gap-1 text-purple-300">
+              <span className="flex items-center gap-1 text-[#a78bfa]">
                 <span className="w-3 h-0.5 bg-[#a78bfa] inline-block" /> Parbati
               </span>
-              <span className="flex items-center gap-1 text-emerald-300">
+              <span className="flex items-center gap-1 text-[#34d399]">
                 <span className="w-3 h-0.5 bg-[#34d399] inline-block" /> Tirthan
               </span>
             </div>

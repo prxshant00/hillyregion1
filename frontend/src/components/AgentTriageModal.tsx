@@ -1,0 +1,587 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Bot,
+  CheckCircle2,
+  AlertTriangle,
+  Radio,
+  Activity,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
+  X,
+  RefreshCw,
+  Clock,
+  Terminal,
+  FileCode,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Fingerprint
+} from 'lucide-react';
+import {
+  WardRisk,
+  AgentTriagePipelineResult,
+  ApproveDirectiveResponse
+} from '../types';
+
+interface AgentTriageModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedWardId: string;
+  wards: WardRisk[];
+  onSelectWard: (wardId: string) => void;
+}
+
+export const AgentTriageModal: React.FC<AgentTriageModalProps> = ({
+  isOpen,
+  onClose,
+  selectedWardId,
+  wards,
+  onSelectWard
+}) => {
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [pipelineResult, setPipelineResult] = useState<AgentTriagePipelineResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [commanderCallsign, setCommanderCallsign] = useState<string>('NDRF-IC-MANDI-01');
+  const [approvalResponse, setApprovalResponse] = useState<ApproveDirectiveResponse | null>(null);
+  const [isAuthorizing, setIsAuthorizing] = useState<boolean>(false);
+  const [showXmlPreview, setShowXmlPreview] = useState<boolean>(false);
+  const [copiedXml, setCopiedXml] = useState<boolean>(false);
+
+  // Auto-run triage when opening or changing ward if not yet run
+  useEffect(() => {
+    if (isOpen) {
+      handleRunTriage(selectedWardId);
+    } else {
+      setApprovalResponse(null);
+      setError(null);
+    }
+  }, [isOpen, selectedWardId]);
+
+  const handleRunTriage = async (wardId: string) => {
+    setIsRunning(true);
+    setError(null);
+    setApprovalResponse(null);
+    try {
+      const res = await fetch(`/api/v1/agents/triage/run?ward_id=${encodeURIComponent(wardId)}`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ detail: 'Failed to run agent triage' }));
+        throw new Error(errData.detail || 'Pipeline execution failed');
+      }
+      const data: AgentTriagePipelineResult = await res.json();
+      setPipelineResult(data);
+    } catch (err: any) {
+      setError(err.message || 'Unknown network error running multi-agent triage.');
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleAuthorizeDirective = async (action: 'APPROVE' | 'DISMISS') => {
+    if (!pipelineResult || !pipelineResult.directive) return;
+    setIsAuthorizing(true);
+    setError(null);
+    try {
+      const payload = {
+        directive_id: pipelineResult.directive.directive_id,
+        ward_id: pipelineResult.ward_id,
+        commander_callsign: commanderCallsign || 'NDRF-IC-MANDI-01',
+        action
+      };
+      const res = await fetch('/api/v1/agents/triage/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ detail: 'Authorization failed' }));
+        throw new Error(errData.detail || 'Authorization request failed');
+      }
+      const data: ApproveDirectiveResponse = await res.json();
+      setApprovalResponse(data);
+    } catch (err: any) {
+      setError(err.message || 'Authorization failed.');
+    } finally {
+      setIsAuthorizing(false);
+    }
+  };
+
+  const handleCopyXml = () => {
+    if (pipelineResult?.directive?.cap_xml_preview) {
+      navigator.clipboard.writeText(pipelineResult.directive.cap_xml_preview);
+      setCopiedXml(true);
+      setTimeout(() => setCopiedXml(false), 2500);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const currentWard = wards.find(w => w.ward_id === selectedWardId);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="agent-triage-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+      <div
+        className="bg-[#161b22] border border-[#2d3744] rounded-lg shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden text-[#e6edf3]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* MODAL HEADER */}
+        <div className="flex items-center justify-between border-b border-[#2d3744] px-4 py-3 bg-[#1c232d]">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded bg-[#212934] border border-[#2d3744] flex items-center justify-center text-[#0284c7]">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 id="agent-triage-title" className="font-display font-bold text-base sm:text-lg text-[#e6edf3]">
+                  Autonomous Multi-Agent Triage Pipeline
+                </h2>
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#243038] border border-[#2d3744] text-[#0284c7]">
+                  v1.4 • HITL GATE
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-sans">
+                Sentinel verification &rarr; Hydrological Physics &rarr; OASIS CAP-India Emergency Dispatch
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleRunTriage(selectedWardId)}
+              disabled={isRunning}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-mono bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] text-slate-200 transition-colors disabled:opacity-50"
+              title="Retrigger multi-agent triage on selected ward"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRunning ? 'animate-spin text-[#0284c7]' : ''}`} />
+              <span className="hidden sm:inline">Retrigger Pipeline</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded hover:bg-[#212934] border border-transparent hover:border-[#2d3744] text-slate-400 hover:text-white transition-colors"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* WARD SELECTOR & PIPELINE META STRIP */}
+        <div className="bg-[#12161c] border-b border-[#2d3744] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 font-sans">Target Catchment:</span>
+            <select
+              value={selectedWardId}
+              onChange={e => {
+                onSelectWard(e.target.value);
+                handleRunTriage(e.target.value);
+              }}
+              className="bg-[#161b22] border border-[#2d3744] rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-[#0284c7]"
+            >
+              {wards.map(w => (
+                <option key={w.ward_id} value={w.ward_id}>
+                  [{w.ward_id}] {w.ward_name} ({w.district_name}) — {w.alert_level}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {pipelineResult && (
+            <div className="flex items-center gap-3 text-slate-400">
+              <span>Pipeline: <strong className="text-slate-200">{pipelineResult.pipeline_id}</strong></span>
+              <span>Steps: <strong className="text-[#0284c7]">{pipelineResult.execution_trace.length}</strong></span>
+              <span className="flex items-center gap-1">
+                {pipelineResult.human_review_required ? (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 text-amber-400 flex items-center gap-1 font-sans text-[11px]">
+                    <ShieldAlert className="w-3 h-3 text-amber-400" />
+                    HITL Approval Required
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-600/40 text-emerald-400 flex items-center gap-1 font-sans text-[11px]">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                    Autonomous Nominal
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* MODAL BODY (SCROLLABLE) */}
+        <div className="p-4 overflow-y-auto space-y-4 flex-1">
+          {error && (
+            <div className="p-3 bg-red-950/50 border border-red-800/60 rounded text-red-300 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* 3-AGENT PROGRESS ARCHITECTURE RIBBON */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+            {/* Agent 1: IngestionSentinel */}
+            <div className={`p-3 rounded border transition-colors ${
+              pipelineResult?.telemetry_audit
+                ? 'bg-[#1c232d] border-[#0284c7]/40'
+                : 'bg-[#161b22] border-[#2d3744]'
+            }`}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-[#212934] border border-[#2d3744] flex items-center justify-center text-[#0284c7]">
+                    <Radio className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="font-display font-semibold text-xs text-[#e6edf3]">IngestionSentinel</span>
+                </div>
+                {pipelineResult?.telemetry_audit && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 border border-emerald-700/50 text-emerald-400">
+                    VERIFIED
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                Validates LoRaWAN 868MHz sonar packet integrity, battery drop, and tilt drift anomalies.
+              </p>
+            </div>
+
+            {/* Agent 2: HydrologyReasoner */}
+            <div className={`p-3 rounded border transition-colors ${
+              pipelineResult?.hydrology_dossier
+                ? 'bg-[#1c232d] border-[#0284c7]/40'
+                : 'bg-[#161b22] border-[#2d3744]'
+            }`}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-[#212934] border border-[#2d3744] flex items-center justify-center text-[#0284c7]">
+                    <Activity className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="font-display font-semibold text-xs text-[#e6edf3]">HydrologyReasoner</span>
+                </div>
+                {pipelineResult?.hydrology_dossier && (
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                    pipelineResult.hydrology_dossier.gsi_threshold_breached
+                      ? 'bg-red-950 border-red-700/50 text-red-400'
+                      : 'bg-emerald-950 border-emerald-700/50 text-emerald-400'
+                  }`}>
+                    {pipelineResult.hydrology_dossier.gsi_threshold_breached ? 'BREACH' : 'STABLE'}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                Applies GSI I-D curve (I = 14.82 * D^-0.39) and Manning surge velocity (4.8 m/s) models.
+              </p>
+            </div>
+
+            {/* Agent 3: DispatchCommander */}
+            <div className={`p-3 rounded border transition-colors ${
+              pipelineResult?.directive
+                ? 'bg-[#1c232d] border-[#0284c7]/40'
+                : 'bg-[#161b22] border-[#2d3744]'
+            }`}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-[#212934] border border-[#2d3744] flex items-center justify-center text-[#b45309]">
+                    <Send className="w-3.5 h-3.5 text-[#b45309]" />
+                  </div>
+                  <span className="font-display font-semibold text-xs text-[#e6edf3]">DispatchCommander</span>
+                </div>
+                {pipelineResult?.directive && (
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                    approvalResponse?.status === 'TRANSMITTED_TO_SACHET'
+                      ? 'bg-emerald-950 border-emerald-700/50 text-emerald-400'
+                      : 'bg-amber-950 border-amber-700/50 text-amber-400'
+                  }`}>
+                    {approvalResponse?.status === 'TRANSMITTED_TO_SACHET' ? 'TRANSMITTED' : 'HITL STAGED'}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                Drafts OASIS CAP-India XML alert; locks autonomous execution pending Commander sign-off.
+              </p>
+            </div>
+          </div>
+
+          {/* DUAL DOSSIER CARDS (TELEMETRY & HYDROLOGICAL PHYSICS) */}
+          {pipelineResult && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Telemetry Quality Audit Card */}
+              <div className="bg-[#1c232d] border border-[#2d3744] rounded p-3 text-xs">
+                <div className="flex items-center justify-between border-b border-[#2d3744] pb-2 mb-2.5">
+                  <div className="flex items-center gap-1.5 font-display font-medium text-slate-200">
+                    <Radio className="w-4 h-4 text-[#0284c7]" />
+                    <span>Telemetry Quality Audit (IngestionSentinel)</span>
+                  </div>
+                  <span className="font-mono text-[11px] text-[#0284c7]">
+                    Confidence: {Math.round(pipelineResult.telemetry_audit.confidence_score * 100)}%
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">Node ID</span>
+                    <span className="text-slate-200 font-bold">{pipelineResult.telemetry_audit.node_id}</span>
+                  </div>
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">Signal SNR</span>
+                    <span className="text-slate-200">{pipelineResult.telemetry_audit.snr_db} dB</span>
+                  </div>
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">Battery Voltage</span>
+                    <span className="text-slate-200">{pipelineResult.telemetry_audit.battery_v} V</span>
+                  </div>
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">Packet Loss</span>
+                    <span className="text-slate-200">{pipelineResult.telemetry_audit.packet_loss_pct}%</span>
+                  </div>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-300 flex items-center justify-between bg-[#161b22] px-2.5 py-1.5 rounded border border-[#2d3744]">
+                  <span className="text-slate-400">Stream Status:</span>
+                  <span className="font-mono text-emerald-400">{pipelineResult.telemetry_audit.source_status}</span>
+                </div>
+              </div>
+
+              {/* Hydrology Physics Proof Card */}
+              <div className="bg-[#1c232d] border border-[#2d3744] rounded p-3 text-xs">
+                <div className="flex items-center justify-between border-b border-[#2d3744] pb-2 mb-2.5">
+                  <div className="flex items-center gap-1.5 font-display font-medium text-slate-200">
+                    <Activity className="w-4 h-4 text-[#0284c7]" />
+                    <span>Hydrology Physics Proof (HydrologyReasoner)</span>
+                  </div>
+                  <span className={`font-mono text-[11px] px-1.5 py-0.5 rounded border ${
+                    pipelineResult.hydrology_dossier.gsi_threshold_breached
+                      ? 'bg-red-950/80 border-red-700 text-red-400'
+                      : 'bg-emerald-950/80 border-emerald-700 text-emerald-400'
+                  }`}>
+                    {pipelineResult.hydrology_dossier.alert_level}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">Rainfall Rate (24h)</span>
+                    <span className="text-slate-200">{pipelineResult.hydrology_dossier.rainfall_rate_mmh} mm/h</span>
+                  </div>
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">GSI Threshold Limit</span>
+                    <span className="text-amber-400">{pipelineResult.hydrology_dossier.gsi_threshold_limit_mmh} mm/h</span>
+                  </div>
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">Manning Velocity</span>
+                    <span className="text-slate-200">{pipelineResult.hydrology_dossier.manning_velocity_ms} m/s</span>
+                  </div>
+                  <div className="bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                    <span className="text-slate-400 text-[10px] block font-sans">Downstream Lead Time</span>
+                    <span className="text-red-400 font-bold">{pipelineResult.hydrology_dossier.downstream_eta_h} hours</span>
+                  </div>
+                </div>
+                <div className="mt-2 text-[10px] text-slate-400 bg-[#161b22] px-2.5 py-1.5 rounded border border-[#2d3744] flex items-center justify-between">
+                  <span>Aggravating Factors:</span>
+                  <span className="text-slate-200 font-sans">{pipelineResult.hydrology_dossier.aggravating_factors.join(' • ')}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* HUMAN-IN-THE-LOOP COMMANDER INTERLOCK & ACTION CARD */}
+          {pipelineResult?.directive && (
+            <div className="bg-[#1c232d] border border-amber-600/40 rounded-lg p-3.5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2d3744] pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded bg-amber-950 border border-amber-700/60 flex items-center justify-center text-amber-400">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-sm text-[#e6edf3]">
+                      Human-in-the-Loop Safety Interlock Gate
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-sans">
+                      Directive ID: <code className="font-mono text-amber-400">{pipelineResult.directive.directive_id}</code>
+                    </p>
+                  </div>
+                </div>
+
+                {approvalResponse ? (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-600 text-emerald-400 text-xs font-mono">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>{approvalResponse.status}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-950/80 border border-amber-600 text-amber-400 text-xs font-mono">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>AWAITING COMMANDER SIGN-OFF</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Bilingual Broadcast Script Box */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                <div className="bg-[#161b22] p-2.5 rounded border border-[#2d3744]">
+                  <span className="text-[10px] font-mono text-[#0284c7] block mb-1">
+                    ENGLISH BROADCAST (SACHET SMS / CELL BROADCAST)
+                  </span>
+                  <p className="text-slate-200 text-[11px] leading-relaxed font-sans">
+                    {pipelineResult.directive.instruction_en}
+                  </p>
+                </div>
+
+                <div className="bg-[#161b22] p-2.5 rounded border border-[#2d3744]">
+                  <span className="text-[10px] font-mono text-[#0284c7] block mb-1">
+                    HINDI BROADCAST (सायरन एवं ग्राम ध्वनि उद्घोषणा)
+                  </span>
+                  <p className="text-slate-200 text-[11px] leading-relaxed font-sans">
+                    {pipelineResult.directive.instruction_hi}
+                  </p>
+                </div>
+              </div>
+
+              {/* OASIS CAP-India XML Accordion */}
+              <div className="bg-[#161b22] rounded border border-[#2d3744]">
+                <button
+                  onClick={() => setShowXmlPreview(!showXmlPreview)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-mono text-slate-300 hover:text-white"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <FileCode className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Inspect OASIS CAP-India v1.2 XML Payload</span>
+                  </div>
+                  {showXmlPreview ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+
+                {showXmlPreview && (
+                  <div className="border-t border-[#2d3744] p-2.5 bg-[#12161c]">
+                    <div className="flex justify-end mb-1.5">
+                      <button
+                        onClick={handleCopyXml}
+                        className="flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] text-slate-300"
+                      >
+                        {copiedXml ? <Check className="w-3 h-3 text-emerald-400" /> : <Terminal className="w-3 h-3" />}
+                        <span>{copiedXml ? 'Copied' : 'Copy XML'}</span>
+                      </button>
+                    </div>
+                    <pre className="text-[10px] font-mono text-slate-300 max-h-48 overflow-y-auto whitespace-pre-wrap leading-tight bg-[#161b22] p-2 rounded border border-[#2d3744]">
+                      {pipelineResult.directive.cap_xml_preview}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              {/* COMMANDER SIGN-OFF CONTROLS */}
+              {approvalResponse ? (
+                <div className="bg-[#161b22] border border-emerald-600/50 rounded p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Fingerprint className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <div className="font-mono text-emerald-400 font-semibold text-xs">
+                        DIGITAL SIGNATURE VERIFIED: {approvalResponse.digital_checksum}
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-sans">
+                        {approvalResponse.message}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400">
+                    Timestamp: {new Date(approvalResponse.broadcast_timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-400 font-sans">Commander Callsign:</span>
+                    <input
+                      type="text"
+                      value={commanderCallsign}
+                      onChange={e => setCommanderCallsign(e.target.value)}
+                      className="bg-[#161b22] border border-[#2d3744] rounded px-2.5 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-[#0284c7] w-52"
+                      placeholder="e.g. NDRF-IC-MANDI-01"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleAuthorizeDirective('DISMISS')}
+                      disabled={isAuthorizing}
+                      className="px-3 py-1.5 rounded text-xs font-mono bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] text-slate-300 transition-colors disabled:opacity-50"
+                    >
+                      Dismiss Directive
+                    </button>
+                    <button
+                      onClick={() => handleAuthorizeDirective('APPROVE')}
+                      disabled={isAuthorizing}
+                      className="flex items-center space-x-1.5 px-4 py-1.5 rounded text-xs font-mono font-semibold bg-[#dc2626] hover:bg-[#b91c1c] text-white transition-colors shadow-md disabled:opacity-50"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5" />
+                      <span>{isAuthorizing ? 'Transmitting...' : 'AUTHORIZE & BROADCAST TO SACHET'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* REACT STEP-BY-STEP EXECUTION TRACE TERMINAL */}
+          <div className="bg-[#12161c] border border-[#2d3744] rounded-lg overflow-hidden">
+            <div className="bg-[#1c232d] px-3 py-2 border-b border-[#2d3744] flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-[#0284c7]" />
+                <span className="font-display font-medium text-slate-200">ReAct Agent Execution Trace</span>
+              </div>
+              <span className="font-mono text-[10px] text-slate-400">
+                Deterministic Agent Log
+              </span>
+            </div>
+
+            <div className="p-3 space-y-2 max-h-64 overflow-y-auto font-mono text-[11px]">
+              {pipelineResult?.execution_trace.map((step, idx) => {
+                let badgeColor = 'bg-[#212934] text-slate-300 border-[#2d3744]';
+                if (step.phase === 'THOUGHT') {
+                  badgeColor = 'bg-blue-950/70 text-blue-300 border-blue-800/40';
+                } else if (step.phase === 'ACTION') {
+                  badgeColor = 'bg-amber-950/70 text-amber-300 border-amber-800/40';
+                } else if (step.phase === 'OBSERVATION') {
+                  badgeColor = 'bg-emerald-950/70 text-emerald-300 border-emerald-800/40';
+                }
+
+                return (
+                  <div key={idx} className="flex items-start gap-2 p-1.5 rounded bg-[#161b22] border border-[#243038]">
+                    <span className="text-slate-400 text-[10px] min-w-[16px] text-right">{idx + 1}</span>
+                    <span className="text-[10px] px-1 py-0.5 rounded bg-[#212934] text-[#0284c7] border border-[#2d3744]">
+                      {step.agent_name}
+                    </span>
+                    <span className={`text-[10px] px-1 py-0.5 rounded border ${badgeColor}`}>
+                      {step.phase}
+                    </span>
+                    <span className="text-slate-300 flex-1 leading-relaxed whitespace-pre-wrap">
+                      {step.detail}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {isRunning && (
+                <div className="flex items-center gap-2 text-[#0284c7] p-2">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Agent orchestrator running tool cycle...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="border-t border-[#2d3744] bg-[#1c232d] px-4 py-2.5 flex items-center justify-between text-xs text-slate-400">
+          <div className="font-mono text-[11px]">
+            Target Ward: <span className="text-slate-200">{currentWard?.ward_name || selectedWardId}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-3 py-1 rounded bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] text-slate-200 font-mono text-xs transition-colors"
+          >
+            Close Console
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

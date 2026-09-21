@@ -182,4 +182,65 @@ export interface SimulationResponse {
   detailed_ward?: WardRisk | null;
 }
 
+export interface AgentExecutionStep {
+  agent_name: 'IngestionSentinel' | 'HydrologyReasoner' | 'DispatchCommander';
+  phase: 'THOUGHT' | 'ACTION' | 'OBSERVATION';
+  detail: string;
+  timestamp: string;
+}
 
+export interface TelemetryQualityAudit {
+  node_id: string;
+  snr_db: number;
+  battery_v: number;
+  packet_loss_pct: number;
+  is_anomalous: boolean;
+  confidence_score: number;
+  source_status: string;
+}
+
+export interface HydrologyDossier {
+  ward_id: string;
+  ward_name: string;
+  rainfall_rate_mmh: number;
+  gsi_threshold_limit_mmh: number;
+  gsi_threshold_breached: boolean;
+  manning_velocity_ms: number;
+  downstream_eta_h: number;
+  composite_risk_score: number;
+  alert_level: string;
+  aggravating_factors: string[];
+}
+
+export interface EmergencyDirectiveDraft {
+  directive_id: string;
+  ward_id: string;
+  ward_name: string;
+  severity: string;
+  headline: string;
+  instruction_en: string;
+  instruction_hi: string;
+  cap_xml_preview: string;
+  human_approval_required: boolean;
+  status: string;
+}
+
+export interface AgentTriagePipelineResult {
+  pipeline_id: string;
+  ward_id: string;
+  ward_name: string;
+  timestamp: string;
+  execution_trace: AgentExecutionStep[];
+  telemetry_audit: TelemetryQualityAudit;
+  hydrology_dossier: HydrologyDossier;
+  directive: EmergencyDirectiveDraft;
+  human_review_required: boolean;
+}
+
+export interface ApproveDirectiveResponse {
+  directive_id: string;
+  status: string;
+  broadcast_timestamp: string;
+  message: string;
+  digital_checksum: string;
+}

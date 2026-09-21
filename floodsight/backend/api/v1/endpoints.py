@@ -411,4 +411,30 @@ async def stream_sensor_telemetry():
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
+@router.post("/agents/triage/run")
+async def run_agent_triage(ward_id: str = Query(default="HP-MND-02", description="Target ward identifier")):
+    """
+    Executes the autonomous multi-agent triage pipeline:
+    IngestionSentinel -> HydrologyReasoner -> DispatchCommander.
+    """
+    from floodsight.backend.agents.pipeline import agent_orchestrator
+    try:
+        result = agent_orchestrator.run_triage(ward_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent triage pipeline failed: {str(e)}")
 
+
+@router.post("/agents/triage/approve")
+async def approve_agent_directive(payload: dict):
+    """
+    Human-in-the-Loop authorization gate:
+    Approves or dismisses a staged emergency warning directive with cryptographic verification.
+    """
+    from floodsight.backend.agents.pipeline import agent_orchestrator
+    from floodsight.backend.agents.contracts import ApproveDirectiveRequest
+    try:
+        req = ApproveDirectiveRequest(**payload)
+        return agent_orchestrator.approve_directive(req)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Authorization gate failed: {str(e)}")
