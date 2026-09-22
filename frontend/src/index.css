@@ -4,21 +4,27 @@
 
 @layer base {
   :root {
+    --color-bg: #f4f6f8;
+    --color-bg-elevated: #ffffff;
+    --color-bg-sunken: #f8fafc;
+    --color-bg-overlay: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text: #0f172a;
+    --color-text-muted: #475569;
+    --color-text-subtle: #94a3b8;
+    --shadow-floating: 0 12px 32px -4px rgba(15, 23, 42, 0.08);
+  }
+
+  .dark {
     --color-bg: #0f172a;
     --color-bg-elevated: #1c2330;
+    --color-bg-sunken: #090d16;
+    --color-bg-overlay: #1e293b;
     --color-border: #334155;
     --color-text: #f1f5f9;
     --color-text-muted: #94a3b8;
     --color-text-subtle: #64748b;
-  }
-
-  .light {
-    --color-bg: #f8fafc;
-    --color-bg-elevated: #ffffff;
-    --color-border: #e2e8f0;
-    --color-text: #0f172a;
-    --color-text-muted: #475569;
-    --color-text-subtle: #64748b;
+    --shadow-floating: 0 12px 32px -4px rgba(0, 0, 0, 0.6);
   }
 
   * {
@@ -235,37 +241,79 @@
   /* Precision Tactical Console Styling & HUD Elements */
   .tactical-chassis,
   .tactical-glass {
-    @apply bg-[#1c232d] border border-[#2d3744] rounded;
+    @apply bg-[#1c232d] border border-[#2d3744] rounded transition-all duration-200;
   }
 
   .tactical-chassis:hover,
   .tactical-glass:hover {
-    border-color: #374354;
+    border-color: #38bdf8;
+    box-shadow: 0 0 16px -4px rgba(56, 189, 248, 0.15);
   }
 
+  /* Micro-dot and tactical grid matrix texture */
+  .bg-tactical-grid {
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(56, 189, 248, 0.08) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Dual-axis Military HUD Corner Brackets */
   .hud-bracket {
     position: relative;
   }
   .hud-bracket::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 6px;
-    height: 2px;
-    background-color: #0284c7;
+    top: -1px;
+    left: -1px;
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid #38bdf8;
+    border-left: 2px solid #38bdf8;
     pointer-events: none;
+    z-index: 10;
   }
   .hud-bracket::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 6px;
-    height: 2px;
-    background-color: #0284c7;
+    bottom: -1px;
+    right: -1px;
+    width: 8px;
+    height: 8px;
+    border-bottom: 2px solid #38bdf8;
+    border-right: 2px solid #38bdf8;
     pointer-events: none;
+    z-index: 10;
   }
+
+  /* Glow borders for critical tactical alerts */
+  .glow-border-cyan {
+    box-shadow: 0 0 12px 0 rgba(56, 189, 248, 0.25);
+  }
+  .glow-border-red {
+    box-shadow: 0 0 14px 0 rgba(239, 68, 68, 0.35);
+  }
+  .glow-border-amber {
+    box-shadow: 0 0 12px 0 rgba(245, 158, 11, 0.25);
+  }
+
+  /* Monospace Tabular Figures to prevent jitter on real-time data feeds */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 8px currentColor;
+  }
+
+  /* Audio directive active waveform equalizer bar */
+  @keyframes eq-pulse {
+    0%, 100% { height: 4px; }
+    50% { height: 16px; }
+  }
+  .animate-eq-1 { animation: eq-pulse 0.6s ease-in-out infinite; }
+  .animate-eq-2 { animation: eq-pulse 0.4s ease-in-out infinite 0.15s; }
+  .animate-eq-3 { animation: eq-pulse 0.8s ease-in-out infinite 0.3s; }
 
   .animate-fadeIn {
     animation: ledgerRefresh 0.08s ease-out forwards;

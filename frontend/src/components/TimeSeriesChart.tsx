@@ -26,77 +26,77 @@ export const TimeSeriesChart: React.FC<ChartProps> = ({ points, wardName }) => {
   const [showTable, setShowTable] = useState<boolean>(false);
 
   return (
-    <div className="tactical-chassis p-4 bg-[#1c232d] border border-[#2d3744] rounded space-y-3 text-left">
+    <div className="p-5 bg-white border border-slate-200/90 rounded-2xl space-y-4 text-left shadow-sm">
       {/* Header & Series Toggles */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#2d3744] pb-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div>
-          <h3 className="font-display font-bold text-base text-[#e6edf3] flex items-center gap-2">
+          <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
             {t('rainfall_chart_title')}
-            <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-[#212934] text-slate-300 border border-[#2d3744]">
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
               48h Hydrograph
             </span>
           </h3>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
-            Catchment: <strong className="text-[#e6edf3]">{wardName}</strong> • Discharge & Rainfall Runoff
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Catchment: <strong className="text-slate-800">{wardName}</strong> • Discharge & Rainfall Runoff
           </p>
         </div>
 
         {/* Action Controls: Table View & Series Toggles */}
-        <div className="flex items-center flex-wrap gap-1.5 text-xs font-mono">
+        <div className="flex items-center flex-wrap gap-2 text-xs">
           {/* Rainfall Toggle */}
           <button
             onClick={() => setShowRainfall(!showRainfall)}
-            className={`px-2 py-1 rounded border transition-colors flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl border transition-all flex items-center space-x-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10b981] ${
               showRainfall
-                ? 'bg-[#212934] border-[#0284c7] text-[#0284c7]'
-                : 'bg-[#161b22] border-[#2d3744] text-slate-500 line-through'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-semibold shadow-xs'
+                : 'bg-slate-100 border-slate-200 text-slate-400 line-through'
             }`}
             aria-pressed={showRainfall}
             aria-label="Toggle Rainfall Series"
           >
-            <span className="w-2 h-2 rounded-sm bg-[#0284c7]" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#10b981]" />
             <span>Rain (mm)</span>
           </button>
 
           {/* Risk Score Toggle */}
           <button
             onClick={() => setShowRiskScore(!showRiskScore)}
-            className={`px-2 py-1 rounded border transition-colors flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl border transition-all flex items-center space-x-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c] ${
               showRiskScore
-                ? 'bg-[#212934] border-[#b45309] text-[#b45309]'
-                : 'bg-[#161b22] border-[#2d3744] text-slate-500 line-through'
+                ? 'bg-orange-50 border-orange-200 text-orange-800 font-semibold shadow-xs'
+                : 'bg-slate-100 border-slate-200 text-slate-400 line-through'
             }`}
             aria-pressed={showRiskScore}
             aria-label="Toggle Risk Score Series"
           >
-            <span className="w-2 h-2 rounded-full bg-[#b45309]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ea580c]" />
             <span>Risk Index</span>
           </button>
 
           {/* River Level Toggle */}
           <button
             onClick={() => setShowRiverLevel(!showRiverLevel)}
-            className={`px-2 py-1 rounded border transition-colors flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl border transition-all flex items-center space-x-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064244] ${
               showRiverLevel
-                ? 'bg-[#212934] border-[#38bdf8] text-[#38bdf8]'
-                : 'bg-[#161b22] border-[#2d3744] text-slate-500 line-through'
+                ? 'bg-teal-50 border-teal-200 text-[#064244] font-semibold shadow-xs'
+                : 'bg-slate-100 border-slate-200 text-slate-400 line-through'
             }`}
             aria-pressed={showRiverLevel}
             aria-label="Toggle River Stage Series"
           >
-            <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#064244]" />
             <span>River (cm)</span>
           </button>
 
           {/* Accessible Table Alternative */}
           <button
             onClick={() => setShowTable(!showTable)}
-            className="px-2 py-1 rounded bg-[#212934] hover:bg-[#2d3744] text-slate-300 border border-[#2d3744] flex items-center space-x-1 transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064244]"
             aria-expanded={showTable}
             aria-label="Toggle Data Table Alternative for Screen Readers"
             title="Accessible Tabular View"
           >
-            <Table className="w-3.5 h-3.5 text-slate-400" />
+            <Table className="w-3.5 h-3.5 text-slate-500" />
             <span>{showTable ? 'Chart View' : 'Table View'}</span>
           </button>
         </div>
@@ -104,23 +104,23 @@ export const TimeSeriesChart: React.FC<ChartProps> = ({ points, wardName }) => {
 
       {/* Accessible Table View Alternative (WCAG 1.3.1) */}
       {showTable ? (
-        <div className="overflow-x-auto max-h-[260px] rounded border border-[#2d3744] font-mono text-xs animate-fadeIn">
+        <div className="overflow-x-auto max-h-[260px] rounded-xl border border-slate-200 text-xs animate-fadeIn">
           <table className="w-full text-left border-collapse" aria-label={`Hydrograph Data for ${wardName}`}>
-            <thead className="bg-[#161b22] text-slate-400 sticky top-0 border-b border-[#2d3744]">
+            <thead className="bg-slate-50 text-slate-600 font-semibold sticky top-0 border-b border-slate-200">
               <tr>
-                <th className="p-2">Time</th>
-                <th className="p-2 text-[#0284c7]">Rainfall (mm)</th>
-                <th className="p-2 text-[#b45309]">Risk Index (0-100)</th>
-                <th className="p-2 text-[#38bdf8]">River Stage (cm)</th>
+                <th className="p-2.5">Time</th>
+                <th className="p-2.5 text-emerald-700">Rainfall (mm)</th>
+                <th className="p-2.5 text-orange-700">Risk Index (0-100)</th>
+                <th className="p-2.5 text-[#064244]">River Stage (cm)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2d3744] bg-[#1c232d]">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {points.map((p, idx) => (
-                <tr key={idx} className="hover:bg-[#212934] transition-colors">
-                  <td className="p-2 text-slate-300">{p.timestamp}</td>
-                  <td className="p-2 font-bold text-[#e6edf3]">{p.rainfall_mm.toFixed(1)}</td>
-                  <td className="p-2 font-bold text-[#b45309]">{p.risk_score.toFixed(1)}</td>
-                  <td className="p-2 text-[#38bdf8]">{p.water_level_cm ? `${p.water_level_cm.toFixed(1)} cm` : 'N/A'}</td>
+                <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                  <td className="p-2.5 text-slate-600 font-mono">{p.timestamp}</td>
+                  <td className="p-2.5 font-bold text-slate-900">{p.rainfall_mm.toFixed(1)}</td>
+                  <td className="p-2.5 font-bold text-orange-700">{p.risk_score.toFixed(1)}</td>
+                  <td className="p-2.5 font-bold text-[#064244]">{p.water_level_cm ? `${p.water_level_cm.toFixed(1)} cm` : 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
@@ -131,41 +131,41 @@ export const TimeSeriesChart: React.FC<ChartProps> = ({ points, wardName }) => {
         <div className="w-full h-[260px]" role="img" aria-label={`Hydrograph chart for ${wardName}`}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={points} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2d3744" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="timestamp"
-                stroke="#8b949e"
+                stroke="#64748b"
                 fontSize={11}
                 tickLine={false}
                 minTickGap={24}
-                fontFamily="JetBrains Mono"
+                fontFamily="inherit"
               />
               <YAxis
                 yAxisId="left"
-                stroke="#8b949e"
+                stroke="#64748b"
                 fontSize={11}
                 tickLine={false}
                 domain={[0, 100]}
-                fontFamily="JetBrains Mono"
+                fontFamily="inherit"
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                stroke="#38bdf8"
+                stroke="#064244"
                 fontSize={11}
                 tickLine={false}
                 domain={[0, 500]}
-                fontFamily="JetBrains Mono"
+                fontFamily="inherit"
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#161b22',
-                  borderColor: '#2d3744',
-                  borderRadius: '4px',
+                  backgroundColor: '#ffffff',
+                  borderColor: '#e2e8f0',
+                  borderRadius: '12px',
                   fontSize: '12px',
-                  color: '#e6edf3',
-                  fontFamily: 'JetBrains Mono',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
+                  color: '#0f172a',
+                  fontFamily: 'inherit',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
                 }}
               />
               {showRainfall && (
@@ -173,9 +173,9 @@ export const TimeSeriesChart: React.FC<ChartProps> = ({ points, wardName }) => {
                   yAxisId="left"
                   dataKey="rainfall_mm"
                   name="Rainfall (mm)"
-                  fill="#0284c7"
-                  opacity={0.7}
-                  radius={[2, 2, 0, 0]}
+                  fill="#10b981"
+                  opacity={0.85}
+                  radius={[4, 4, 0, 0]}
                 />
               )}
               {showRiskScore && (
@@ -184,10 +184,10 @@ export const TimeSeriesChart: React.FC<ChartProps> = ({ points, wardName }) => {
                   type="monotone"
                   dataKey="risk_score"
                   name="Risk Score"
-                  stroke="#b45309"
-                  strokeWidth={2}
+                  stroke="#ea580c"
+                  strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4, fill: '#b45309', stroke: '#e6edf3' }}
+                  activeDot={{ r: 5, fill: '#ea580c', stroke: '#ffffff' }}
                 />
               )}
               {showRiverLevel && (
@@ -196,8 +196,8 @@ export const TimeSeriesChart: React.FC<ChartProps> = ({ points, wardName }) => {
                   type="monotone"
                   dataKey="water_level_cm"
                   name="River Level (cm)"
-                  stroke="#38bdf8"
-                  strokeWidth={2}
+                  stroke="#064244"
+                  strokeWidth={2.5}
                   strokeDasharray="4 4"
                   dot={false}
                 />

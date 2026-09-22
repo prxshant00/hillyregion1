@@ -42,6 +42,13 @@
       "singleTriage": "POST /api/v1/agents/triage/run",
       "approveDirective": "POST /api/v1/agents/triage/approve"
     },
+    "profiling": {
+      "enabled": true,
+      "trackPerAgentLatency": true,
+      "trackTokenBudget": true,
+      "throughputMetric": "wards_per_second",
+      "bottleneckDetection": true
+    },
     "docker": {
       "service": "kilo-orchestrator",
       "workers": 4,

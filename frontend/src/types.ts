@@ -187,6 +187,8 @@ export interface AgentExecutionStep {
   phase: 'THOUGHT' | 'ACTION' | 'OBSERVATION';
   detail: string;
   timestamp: string;
+  duration_ms?: number;
+  confidence_score?: number;
 }
 
 export interface TelemetryQualityAudit {
@@ -235,6 +237,13 @@ export interface AgentTriagePipelineResult {
   hydrology_dossier: HydrologyDossier;
   directive: EmergencyDirectiveDraft;
   human_review_required: boolean;
+  total_duration_ms?: number;
+  estimated_tokens?: number;
+  agent_latencies_ms?: {
+    IngestionSentinel?: number;
+    HydrologyReasoner?: number;
+    DispatchCommander?: number;
+  };
 }
 
 export interface ApproveDirectiveResponse {
@@ -260,6 +269,14 @@ export interface KiloOrchestrationResponse {
     slowest_ward: string;
     average_confidence_pct: number;
     concurrency_efficiency_gain: number;
+    wards_per_second?: number;
+    agent_latency_breakdown_ms?: {
+      IngestionSentinel?: number;
+      HydrologyReasoner?: number;
+      DispatchCommander?: number;
+    };
+    total_estimated_tokens?: number;
+    thread_workers_configured?: number;
   };
   status: string;
 }

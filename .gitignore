@@ -48,6 +48,10 @@ frontend/dist-ssr/
 # OS
 .DS_Store
 Thumbs.db
+# Testing & Reports
+test-results/
+playwright-report/
+.pytest_cache/
 
 .vercel
 .env*

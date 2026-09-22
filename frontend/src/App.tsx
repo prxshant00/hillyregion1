@@ -30,7 +30,7 @@ import {
   SitRepData,
   SensorNode
 } from './types';
-import { Filter, RefreshCw, SlidersHorizontal, Volume2, Clock, ChevronLeft } from 'lucide-react';
+import { Filter, RefreshCw, SlidersHorizontal, Volume2, Clock, ChevronLeft, Map, Activity, AlertTriangle } from 'lucide-react';
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
@@ -423,11 +423,11 @@ export const App: React.FC = () => {
     : '0';
 
   return (
-    <div className="min-h-screen bg-tactical-bg text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f4f6f8] text-slate-800 flex flex-col font-sans">
       {/* Accessible Skip Link (WCAG 2.4.1) */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2.5 focus:bg-amber-400 focus:text-slate-950 focus:font-bold focus:rounded-lg focus:shadow-2xl focus:ring-4 focus:ring-amber-500 focus:outline-none text-sm transition-all"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2.5 focus:bg-amber-500 focus:text-white focus:font-bold focus:rounded-lg focus:shadow-2xl focus:ring-4 focus:ring-amber-500 focus:outline-none text-sm transition-all"
       >
         Skip to main emergency dashboard
       </a>
@@ -437,10 +437,10 @@ export const App: React.FC = () => {
         <aside
           aria-live="assertive"
           aria-atomic="true"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[92%] bg-black/95 border-2 border-amber-400 rounded-xl px-5 py-3 shadow-[0_0_30px_rgba(245,158,11,0.5)] flex items-center gap-3 backdrop-blur-md animate-fadeIn"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[92%] bg-slate-900/95 border border-amber-500 rounded-2xl px-5 py-3.5 shadow-2xl flex items-center gap-3 backdrop-blur-md animate-fadeIn"
           role="status"
         >
-          <div className="w-8 h-8 rounded-full bg-amber-400/20 text-amber-400 flex items-center justify-center flex-shrink-0 animate-pulse">
+          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 animate-pulse">
             <Volume2 className="w-5 h-5" aria-hidden="true" />
           </div>
           <div className="flex-1">
@@ -453,7 +453,7 @@ export const App: React.FC = () => {
           </div>
           <button
             onClick={() => setActiveCaption(null)}
-            className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 transition-colors"
+            className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
             aria-label="Dismiss closed caption"
           >
             Dismiss
@@ -482,52 +482,89 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5 focus:outline-none" role="main">
-        {/* KPI Strip & District Selector */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#1c232d] border border-[#2d3744] rounded p-3 text-left">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-4 focus:outline-none" role="main">
+        {/* Commusoft Signature Callout Warning Banner */}
+        <div className="bg-[#fff7ed] border border-[#fed7aa] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[#9a3412] shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#ea580c]/15 text-[#ea580c] flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-[#ea580c]" />
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[#ea580c]">
+                Catchment Advisory Notice • Mandi & Kullu Basins
+              </div>
+              <p className="text-sm font-medium text-slate-700 mt-0.5">
+                Elevated runoff velocity detected in Seraj & Parbati river corridors. Flood monitoring telemetry active.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setIsAgentTriageOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              View Multi-Agent Triage
+            </button>
+            <button
+              onClick={() => setIsSitRepOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-white border border-[#fed7aa] hover:bg-orange-50/60 text-[#9a3412] text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              SitRep Brief
+            </button>
+          </div>
+        </div>
+
+        {/* Commusoft White Card: District Selector & Operations Strip */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 text-left shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* District Filter Buttons */}
           <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 lg:pb-0" role="tablist" aria-label="District Filter">
-            <Filter className="w-4 h-4 text-slate-400 mr-1 flex-shrink-0" aria-hidden="true" />
+            <div className="flex items-center gap-1 text-slate-500 mr-2 text-xs font-semibold flex-shrink-0">
+              <Filter className="w-3.5 h-3.5 text-[#064244]" aria-hidden="true" />
+              <span>Sector:</span>
+            </div>
             {['All', 'Mandi', 'Kullu', 'Kangra'].map((dist, idx) => (
               <button
                 key={dist}
                 role="tab"
                 aria-selected={selectedDistrict === dist}
                 onClick={() => setSelectedDistrict(dist)}
-                className={`px-2.5 py-1 rounded text-xs font-mono font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064244] cursor-pointer ${
                   selectedDistrict === dist
-                    ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
-                    : 'bg-[#212934] hover:bg-[#2d3744] text-slate-300 border border-[#2d3744]'
+                    ? 'bg-[#064244] text-white shadow-sm'
+                    : 'bg-slate-100/90 hover:bg-slate-200/80 text-slate-700 border border-slate-200/70'
                 }`}
                 aria-label={`Filter by ${dist} District (Press ${idx + 1})`}
               >
-                {dist === 'All' ? t('all_districts') : `${dist} District`}
+                {dist === 'All' ? t('all_districts') : `${dist} Sector`}
                 <span className="sr-only">, shortcut key {idx + 1}</span>
               </button>
             ))}
           </div>
 
           {/* KPI Metrics & Simulation Toggles */}
-          <div className="flex items-center flex-wrap gap-3 text-xs font-mono">
-            <div>
-              <span className="text-slate-400 block text-[10px] uppercase">Monitored</span>
-              <strong className="text-sm text-[#e6edf3]">{totalWards} Wards</strong>
+          <div className="flex items-center flex-wrap gap-4 text-xs">
+            <div className="border-l border-slate-200 pl-3">
+              <span className="text-slate-400 block text-[10px] uppercase tracking-wider font-semibold">Monitored</span>
+              <strong className="text-sm text-slate-900 font-bold tabular-nums">{totalWards} Wards</strong>
             </div>
 
-            <div>
-              <span className="text-slate-400 block text-[10px] uppercase">Watch / Warning</span>
-              <strong className="text-sm text-[#dc2626] font-bold">{criticalCount} Active</strong>
+            <div className="border-l border-slate-200 pl-3">
+              <span className="text-slate-400 block text-[10px] uppercase tracking-wider font-semibold">Watch / Warning</span>
+              <strong className="text-sm text-[#ef4444] font-bold tabular-nums flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-ping" />
+                {criticalCount} Active
+              </strong>
             </div>
 
-            <div>
-              <span className="text-slate-400 block text-[10px] uppercase">Mean Risk</span>
-              <strong className="text-sm text-[#b45309]">{meanScore} / 100</strong>
+            <div className="border-l border-slate-200 pl-3">
+              <span className="text-slate-400 block text-[10px] uppercase tracking-wider font-semibold">Mean Catchment Risk</span>
+              <strong className="text-sm text-[#ea580c] font-bold tabular-nums">{meanScore} <span className="text-xs text-slate-400 font-normal">/ 100</span></strong>
             </div>
 
             {/* SSE Live Telemetry Feed Badge */}
-            <div className="flex items-center space-x-1.5 text-[10px] font-mono px-2 py-1 rounded bg-[#212934] border border-[#2d3744]">
-              <span className={`w-2 h-2 rounded-full ${isSSEConnected ? 'bg-[#15803d]' : 'bg-slate-500'}`} />
-              <span className="text-slate-300 hidden sm:inline">{isSSEConnected ? 'SSE Live Feed' : 'Telemetry Link'}</span>
+            <div className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800">
+              <span className={`w-2 h-2 rounded-full ${isSSEConnected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-400'}`} />
+              <span className="hidden sm:inline tracking-wide">{isSSEConnected ? 'SSE Live' : 'Telemetry Link'}</span>
             </div>
 
             {/* 4D Digital Twin Time-Lapse Toggle */}
@@ -536,14 +573,14 @@ export const App: React.FC = () => {
                 setShowDigitalTwin(!showDigitalTwin);
                 if (showSandbox) setShowSandbox(false);
               }}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded border transition-colors text-xs font-mono focus-visible:outline-2 focus-visible:outline-[#0284c7] ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064244] ${
                 showDigitalTwin
-                  ? 'bg-[#243038] border-[#0284c7] text-[#0284c7] font-bold'
-                  : 'bg-[#212934] border-[#2d3744] text-slate-300 hover:bg-[#2d3744]'
+                  ? 'bg-[#064244] border-[#064244] text-white shadow-sm'
+                  : 'bg-slate-100/90 border-slate-200 text-slate-700 hover:bg-slate-200/80'
               }`}
               aria-expanded={showDigitalTwin}
             >
-              <Clock className="w-3.5 h-3.5 text-slate-300" />
+              <Clock className={`w-3.5 h-3.5 ${showDigitalTwin ? 'text-emerald-300' : 'text-[#064244]'}`} />
               <span>4D Digital Twin</span>
             </button>
 
@@ -553,16 +590,16 @@ export const App: React.FC = () => {
                 setShowSandbox(!showSandbox);
                 if (showDigitalTwin) setShowDigitalTwin(false);
               }}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded border transition-colors text-xs font-mono focus-visible:outline-2 focus-visible:outline-[#0284c7] ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c] ${
                 showSandbox
-                  ? 'bg-[#243038] border-[#b45309] text-[#b45309] font-bold'
-                  : 'bg-[#212934] border-[#2d3744] text-slate-300 hover:bg-[#2d3744]'
+                  ? 'bg-[#ea580c] border-[#ea580c] text-white shadow-sm'
+                  : 'bg-slate-100/90 border-slate-200 text-slate-700 hover:bg-slate-200/80'
               }`}
               aria-expanded={showSandbox}
               aria-controls="simulation-sandbox-panel"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-300" aria-hidden="true" />
-              <span className="hidden sm:inline">Simulate Cloudburst</span>
+              <SlidersHorizontal className={`w-3.5 h-3.5 ${showSandbox ? 'text-amber-200' : 'text-[#ea580c]'}`} aria-hidden="true" />
+              <span className="hidden sm:inline">Simulate Surge</span>
               <span className="sm:hidden">Simulate</span>
             </button>
 
@@ -570,11 +607,11 @@ export const App: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-1.5 rounded bg-[#212934] border border-[#2d3744] hover:bg-[#2d3744] text-slate-300 transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7]"
+              className="p-2 rounded-xl bg-slate-100/90 border border-slate-200 hover:bg-slate-200/80 text-slate-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064244]"
               title="Refresh Ingestion Feeds"
               aria-label="Refresh Satellite and Ingestion Data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0284c7]' : ''}`} aria-hidden="true" />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#064244]' : 'text-slate-600'}`} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -602,46 +639,48 @@ export const App: React.FC = () => {
         )}
 
         {/* Mobile Segmented View Switcher (Visible on < lg screens) */}
-        <div className="lg:hidden flex items-center justify-between p-1 bg-slate-900/90 border border-slate-800 rounded-xl overflow-x-auto text-xs font-mono shadow-md gap-1">
+        <div className="lg:hidden flex items-center justify-between p-1.5 bg-white border border-slate-200/90 rounded-2xl overflow-x-auto text-xs shadow-sm gap-1.5">
           <button
             onClick={() => setMobileTab('all')}
-            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium ${
+            className={`flex-1 py-2 px-3 rounded-xl text-center transition-all min-h-[42px] whitespace-nowrap font-semibold flex items-center justify-center gap-1.5 cursor-pointer ${
               mobileTab === 'all'
-                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#064244] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 bg-slate-50'
             }`}
           >
             All Views
           </button>
           <button
             onClick={() => setMobileTab('map')}
-            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium ${
+            className={`flex-1 py-2 px-3 rounded-xl text-center transition-all min-h-[42px] whitespace-nowrap font-semibold flex items-center justify-center gap-1.5 cursor-pointer ${
               mobileTab === 'map'
-                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#064244] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 bg-slate-50'
             }`}
           >
-            🗺️ Map
+            <Map className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Map</span>
           </button>
           <button
             onClick={() => setMobileTab('ward')}
-            className={`flex-1 py-2 px-2 rounded-lg text-center transition-all min-h-[40px] whitespace-nowrap font-medium flex items-center justify-center space-x-1 ${
+            className={`flex-1 py-2 px-3 rounded-xl text-center transition-all min-h-[42px] whitespace-nowrap font-semibold flex items-center justify-center gap-1.5 cursor-pointer ${
               mobileTab === 'ward'
-                ? 'bg-cyan-500 text-black font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#064244] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 bg-slate-50'
             }`}
           >
-            <span>⚡ Intel</span>
+            <Activity className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+            <span>Intel</span>
             {selectedWardDetail && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse ml-0.5" />
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse ml-0.5" />
             )}
           </button>
           <button
             onClick={() => setMobileTab('hydrograph')}
-            className={`flex-1 py-1.5 px-2 rounded text-center transition-colors min-h-[36px] whitespace-nowrap font-medium ${
+            className={`flex-1 py-2 px-3 rounded-xl text-center transition-all min-h-[42px] whitespace-nowrap font-semibold flex items-center justify-center gap-1.5 cursor-pointer ${
               mobileTab === 'hydrograph'
-                ? 'bg-[#0284c7] text-white font-bold'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#064244] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 bg-slate-50'
             }`}
           >
             Charts
@@ -739,9 +778,19 @@ export const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#2d3744] py-3.5 px-4 text-center text-xs font-mono text-slate-400 bg-[#161b22]">
-        FloodSight SIH26192 • Ministry of Home Affairs / NDRF Early Warning Initiative • Satellite Dem & Esri World Topo.
+      {/* Commusoft SaaS Footer */}
+      <footer className="border-t border-slate-200/80 py-4 px-6 text-xs text-slate-500 bg-white flex flex-col md:flex-row items-center justify-between gap-3 text-left shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse" />
+          <span className="text-slate-800 font-bold tracking-wide">FloodSight SIH26192 Command Core</span>
+          <span className="text-slate-300 hidden sm:inline">•</span>
+          <span className="text-slate-500 hidden sm:inline">Ministry of Home Affairs / NDRF Early Warning Initiative</span>
+        </div>
+        <div className="flex items-center gap-4 text-[11px] text-slate-500 font-mono">
+          <span>Satellite DEM: <strong className="text-slate-700 font-semibold">SRTM 30m</strong></span>
+          <span>Hydrology: <strong className="text-slate-700 font-semibold">CWC Manning-GSI</strong></span>
+          <span className="text-[#064244] font-semibold">31.7088° N • 76.9320° E</span>
+        </div>
       </footer>
 
       {/* Modals & Dialogs */}

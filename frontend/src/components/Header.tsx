@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ShieldAlert,
   Activity,
   FileText,
   Globe,
@@ -63,6 +62,25 @@ export const Header: React.FC<HeaderProps> = ({
   const { t, i18n } = useTranslation();
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [militaryTime, setMilitaryTime] = React.useState<{ utc: string; ist: string }>({ utc: '--:--:--', ist: '--:--:--' });
+
+  React.useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const utcStr = now.toISOString().substring(11, 19);
+      const istStr = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(now);
+      setMilitaryTime({ utc: utcStr, ist: istStr });
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'en' ? 'hi' : 'en';
@@ -89,197 +107,153 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       role="banner"
-      className="border-b border-[#2d3744] bg-[#161b22] sticky top-0 z-50 px-3 sm:px-4 py-2 shadow-md transition-colors"
+      className="border-b border-[#032e30] bg-[#064244] text-white sticky top-0 z-50 px-3 sm:px-5 py-2.5 shadow-md transition-colors"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-        {/* Brand & Tactical Emblem */}
-        <div className="flex items-center space-x-2.5 sm:space-x-3">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-[#212934] border border-[#2d3744] flex items-center justify-center text-[#0284c7] flex-shrink-0">
-            <ShieldAlert className="w-5 h-5 text-[#0284c7]" aria-hidden="true" />
+        {/* Brand & Emblem (Commusoft Orange Badge style) */}
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-lg bg-[#ea580c] flex items-center justify-center text-white font-display font-black text-base shadow-sm flex-shrink-0">
+            F
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="font-display font-bold text-base sm:text-lg tracking-tight text-[#e6edf3] flex items-center gap-2">
+              <h1 className="font-display font-bold text-base tracking-tight text-white flex items-center gap-2">
                 {t('app_title')}
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#212934] text-slate-300 border border-[#2d3744]">
-                  NDRF • HP CORRIDOR
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#0a5254] text-teal-200 border border-[#0e5c5f] font-bold">
+                  HP FIELD OPS
                 </span>
               </h1>
             </div>
-            <p className="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-xs md:max-w-md font-sans">
+            <p className="text-[11px] text-teal-200/80 truncate max-w-[200px] sm:max-w-xs md:max-w-md font-sans">
               {t('app_subtitle')}
             </p>
           </div>
         </div>
 
-        {/* Desktop Action Clusters (Visible on lg+ screens) */}
-        <div className="hidden lg:flex items-center gap-2" role="toolbar" aria-label="System Actions and Operations">
-          {/* CLUSTER 1: Streams & Hydrology */}
-          <div className="flex items-center space-x-1 bg-[#1c232d] border border-[#2d3744] p-1 rounded">
-            <button
-              onClick={onOpenSearch}
-              className="flex items-center space-x-1.5 bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] px-2.5 py-1 rounded text-xs font-mono text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              aria-label="Quick Ward Search (Shortcut Ctrl+K)"
-              title="Search Wards & Basins (Ctrl+K)"
-            >
-              <Search className="w-3.5 h-3.5 text-[#0284c7]" aria-hidden="true" />
-              <span className="font-sans">Search</span>
-              <kbd className="text-[9px] px-1 py-0.2 rounded bg-[#161b22] border border-[#2d3744] text-slate-400">Ctrl+K</kbd>
-            </button>
+        {/* Center Navigation Links (Commusoft Nav Bar style) */}
+        <nav className="hidden xl:flex items-center space-x-1 font-sans text-xs font-medium" aria-label="Command Center Navigation">
+          <button
+            onClick={onOpenAgentTriage}
+            className="flex items-center space-x-1.5 bg-[#0a5254] hover:bg-[#0d6063] text-white px-3 py-1.5 rounded-lg border border-[#0f6e72] transition-colors shadow-sm cursor-pointer"
+            title="Open Autonomous Multi-Agent Triage Pipeline"
+          >
+            <Bot className="w-3.5 h-3.5 text-teal-200" aria-hidden="true" />
+            <span>AI Triage</span>
+          </button>
 
-            <button
-              onClick={onOpenSensors}
-              className="flex items-center space-x-1.5 bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] px-2.5 py-1 rounded text-xs font-mono text-[#0284c7] transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              title="Inspect LoRaWAN Ultrasonic River Gauges"
-              aria-label={`Open IoT Sensors Modal, ${activeSensorsCount} Nodes Active`}
-            >
-              <Radio className="w-3.5 h-3.5 text-[#0284c7]" aria-hidden="true" />
-              <span>{activeSensorsCount} IoT</span>
-            </button>
+          <button
+            onClick={onOpenSensors}
+            className="flex items-center space-x-1.5 hover:bg-[#08484a] text-teal-100 hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="Inspect Ultrasonic River Gauges"
+          >
+            <Radio className="w-3.5 h-3.5 text-teal-300" aria-hidden="true" />
+            <span>{activeSensorsCount} IoT Sensors</span>
+          </button>
 
-            <button
-              onClick={onOpenRiverCascade}
-              className="flex items-center space-x-1.5 bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] text-slate-200 px-2.5 py-1 rounded text-xs font-mono transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              title="Inspect Upstream-to-Downstream River Routing"
-              aria-label="Open River Cascade Routing Modal"
-            >
-              <Waves className="w-3.5 h-3.5 text-[#0284c7]" aria-hidden="true" />
-              <span>Cascades</span>
-            </button>
+          <button
+            onClick={onOpenRiverCascade}
+            className="flex items-center space-x-1.5 hover:bg-[#08484a] text-teal-100 hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="River Cascade Routing"
+          >
+            <Waves className="w-3.5 h-3.5 text-teal-300" aria-hidden="true" />
+            <span>Cascades</span>
+          </button>
 
-            <button
-              onClick={onOpenCAP}
-              className="flex items-center space-x-1.5 bg-[#212934] hover:bg-[#2d3744] border border-[#2d3744] text-[#b45309] px-2.5 py-1 rounded text-xs font-mono transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              title="Open NDMA CAP-India OASIS XML Feed"
-              aria-label="Open Common Alerting Protocol Modal"
-            >
-              <Rss className="w-3.5 h-3.5 text-[#b45309]" aria-hidden="true" />
-              <span>CAP Feed</span>
-            </button>
+          <button
+            onClick={onOpenCAP}
+            className="flex items-center space-x-1.5 hover:bg-[#08484a] text-teal-100 hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="Open NDMA CAP-India Feed"
+          >
+            <Rss className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
+            <span>CAP Feed</span>
+          </button>
+
+          <button
+            onClick={onOpenSitRep}
+            className="flex items-center space-x-1.5 hover:bg-[#08484a] text-teal-100 hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="Official Situation Report"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-teal-300" aria-hidden="true" />
+            <span>SITREP</span>
+          </button>
+
+          <button
+            onClick={onOpenExport}
+            className="flex items-center space-x-1.5 hover:bg-[#08484a] text-teal-100 hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="Export Spatial & Tabular Data"
+          >
+            <Download className="w-3.5 h-3.5 text-teal-300" aria-hidden="true" />
+            <span>Export</span>
+          </button>
+        </nav>
+
+        {/* Right Action Clusters */}
+        <div className="hidden lg:flex items-center gap-2.5">
+          {/* Commusoft Style Search Pill */}
+          <button
+            onClick={onOpenSearch}
+            className="flex items-center space-x-2 bg-[#043335] hover:bg-[#032e30] border border-[#0a5254] px-3 py-1.5 rounded-lg text-xs font-sans text-teal-100 transition-colors cursor-pointer"
+            title="Search Wards & Basins (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5 text-teal-300" aria-hidden="true" />
+            <span>Search...</span>
+            <kbd className="text-[9px] px-1 py-0.5 rounded bg-[#064244] border border-[#0a5254] text-teal-300">Ctrl+K</kbd>
+          </button>
+
+          {/* Mission Time Clock */}
+          <div className="flex items-center gap-1.5 bg-[#043335] border border-[#0a5254] px-2.5 py-1.5 rounded-lg font-mono text-[11px] text-teal-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-white font-bold">{militaryTime.ist}</span>
+            <span className="text-teal-400 text-[10px]">IST</span>
           </div>
 
-          {/* CLUSTER 2: Operations & Reporting */}
-          <div className="flex items-center space-x-1 bg-[#1c232d] border border-[#2d3744] p-1 rounded">
-            <button
-              onClick={onOpenSitRep}
-              className="flex items-center space-x-1.5 bg-[#212934] hover:bg-[#2d3744] text-slate-200 border border-[#2d3744] px-2.5 py-1 rounded text-xs font-mono transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              aria-label="Generate Official Situation Report SITREP (Shortcut Alt+S)"
-              title="Official NDRF Situation Report (Alt+S)"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-slate-300" aria-hidden="true" />
-              <span>SITREP</span>
-            </button>
+          {/* Voice Alert Toggle */}
+          <button
+            onClick={handleToggleAudio}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-sans border transition-colors cursor-pointer flex items-center space-x-1.5 ${
+              audioEnabled
+                ? 'bg-amber-500 border-amber-400 text-slate-950 font-bold shadow-sm'
+                : 'bg-[#043335] hover:bg-[#032e30] border-[#0a5254] text-teal-100'
+            }`}
+            title={audioEnabled ? "Audio Active (Alt+V)" : "Enable Audio Voice (Alt+V)"}
+          >
+            {audioEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5 text-teal-300" />}
+            <span className="hidden xl:inline">{audioEnabled ? 'Voice ON' : 'Mute'}</span>
+          </button>
 
-            <button
-              onClick={onOpenExport}
-              className="flex items-center space-x-1.5 bg-[#212934] hover:bg-[#2d3744] text-slate-200 border border-[#2d3744] px-2.5 py-1 rounded text-xs font-mono transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              title="Export Spatial GeoJSON, Tabular CSV, and NDMA CAP XML"
-              aria-label="Export Data and Intelligence"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-300" aria-hidden="true" />
-              <span>Export</span>
-            </button>
+          {/* High Contrast Mode Toggle */}
+          <button
+            onClick={onToggleHighContrast}
+            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+              isHighContrast
+                ? 'bg-white text-black font-bold border-white'
+                : 'bg-[#043335] hover:bg-[#032e30] text-teal-200 border-[#0a5254]'
+            }`}
+            title="Toggle High Contrast Mode (Alt+C)"
+            aria-label="Toggle High Contrast Mode"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
 
-            <button
-              onClick={onOpenAgentTriage}
-              className="flex items-center space-x-1.5 bg-[#212934] hover:bg-[#2d3744] text-[#0284c7] border border-[#0284c7]/40 px-2.5 py-1 rounded text-xs font-mono transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px] shadow-sm"
-              title="Open Autonomous Multi-Agent Triage Pipeline (HITL Safety Gate)"
-              aria-label="Open Autonomous AI Agents Triage Modal"
-            >
-              <Bot className="w-3.5 h-3.5 text-[#0284c7]" aria-hidden="true" />
-              <span>AI Triage</span>
-            </button>
+          {/* Language Switcher */}
+          <button
+            onClick={toggleLanguage}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#043335] hover:bg-[#032e30] text-teal-100 border border-[#0a5254] transition-colors cursor-pointer flex items-center space-x-1"
+            title="Toggle English / हिन्दी"
+          >
+            <Globe className="w-3.5 h-3.5 text-teal-300" />
+            <span>{i18n.language === 'en' ? 'हिन्दी' : 'EN'}</span>
+          </button>
 
-            <button
-              onClick={onOpenAlertsAudit}
-              className="p-1.5 rounded bg-[#212934] hover:bg-[#2d3744] text-slate-200 border border-[#2d3744] transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              aria-label="Open Alert Dispatch History Log"
-              title="Verifiable SMS Dispatch Audit Log"
-            >
-              <Send className="w-3.5 h-3.5 text-[#dc2626]" aria-hidden="true" />
-            </button>
-
-            <button
-              onClick={onOpenValidation}
-              className="p-1.5 rounded bg-[#212934] hover:bg-[#2d3744] text-slate-200 border border-[#2d3744] transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              aria-label="Open 2025 Ground Truth Validation Events"
-              title="2025 Ground Truth Holdout Verification"
-            >
-              <Activity className="w-3.5 h-3.5 text-[#b45309]" aria-hidden="true" />
-            </button>
-
-            <button
-              onClick={onOpenModelCard}
-              className="p-1.5 rounded bg-[#212934] hover:bg-[#2d3744] text-slate-200 border border-[#2d3744] transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              aria-label="View AI/ML Physics Model Card"
-              title="View AI/ML Model Card & Benchmark Transparency"
-            >
-              <FileText className="w-3.5 h-3.5 text-slate-300" aria-hidden="true" />
-            </button>
-          </div>
-
-          {/* CLUSTER 3: Accessibility & Utility Controls */}
-          <div className="flex items-center space-x-1 bg-[#1c232d] border border-[#2d3744] p-1 rounded">
-            <button
-              onClick={handleToggleAudio}
-              className={`px-2.5 py-1 rounded text-xs font-mono border transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px] flex items-center space-x-1.5 ${
-                audioEnabled
-                  ? 'bg-[#b45309] border-[#b45309] text-white'
-                  : 'bg-[#212934] hover:bg-[#2d3744] border-[#2d3744] text-slate-400 hover:text-white'
-              }`}
-              title={audioEnabled ? "Audio Siren & Voice Active (Alt+V)" : "Enable Audio Siren & Voice (Alt+V)"}
-              aria-label={audioEnabled ? "Disable Audio Siren and Voice Broadcast" : "Enable Audio Siren and Voice Broadcast"}
-              aria-pressed={audioEnabled}
-            >
-              {audioEnabled ? <Volume2 className="w-3.5 h-3.5 text-white" aria-hidden="true" /> : <VolumeX className="w-3.5 h-3.5" aria-hidden="true" />}
-              <span>{audioEnabled ? 'Audio Active' : 'Mute'}</span>
-            </button>
-
-            <button
-              onClick={onToggleHighContrast}
-              className={`px-2.5 py-1 rounded text-xs font-mono border transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px] flex items-center space-x-1 ${
-                isHighContrast
-                  ? 'bg-white text-black font-bold border-white'
-                  : 'bg-[#212934] hover:bg-[#2d3744] text-slate-300 border-[#2d3744]'
-              }`}
-              title="Toggle High-Contrast Sunlight / Low-Vision Mode (Alt+C)"
-              aria-label={isHighContrast ? "Disable High-Contrast Mode" : "Enable High-Contrast Sunlight Mode"}
-              aria-pressed={isHighContrast}
-            >
-              <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-              <span className="hidden xl:inline">{isHighContrast ? 'Contrast ON' : 'Contrast'}</span>
-            </button>
-
-            <button
-              onClick={onCycleTextScale}
-              className="px-2.5 py-1 rounded text-xs font-mono bg-[#212934] hover:bg-[#2d3744] text-slate-200 border border-[#2d3744] transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px] flex items-center space-x-1"
-              title={`Cycle Text Scaling: Standard -> Large -> X-Large (Alt+T). Currently ${textScale.toUpperCase()}`}
-              aria-label={`Cycle Text Scaling. Current size is ${textScale}.`}
-            >
-              <Type className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-              <span className="font-bold">{textScale === 'normal' ? '100%' : textScale === 'large' ? '115%' : '130%'}</span>
-            </button>
-
-            <button
-              onClick={toggleLanguage}
-              className="px-2.5 py-1 rounded text-xs font-mono bg-[#212934] hover:bg-[#2d3744] text-slate-200 border border-[#2d3744] transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px] flex items-center space-x-1"
-              aria-label={`Change language, currently ${i18n.language === 'en' ? 'English' : 'Hindi'}`}
-              title="Toggle English / हिन्दी"
-            >
-              <Globe className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-              <span className="font-bold">{i18n.language === 'en' ? 'हिन्दी' : 'EN'}</span>
-            </button>
-
-            <button
-              onClick={onOpenShortcuts}
-              className="p-1.5 rounded bg-[#212934] hover:bg-[#2d3744] text-slate-300 border border-[#2d3744] transition-colors focus-visible:outline-2 focus-visible:outline-[#0284c7] min-h-[32px]"
-              title="Keyboard Shortcuts & Accessibility Guide (Press ?)"
-              aria-label="Open Keyboard Shortcuts and Accessibility Guide"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-            </button>
+          {/* User Avatar Circle (Matching Commusoft BF badge in screenshot) */}
+          <div
+            className="w-7 h-7 rounded-full bg-[#f59e0b] text-[#78350f] font-bold text-xs flex items-center justify-center shadow-sm cursor-default"
+            title="Himachal Pradesh SDMA Command Post"
+          >
+            HP
           </div>
         </div>
+
 
         {/* Mobile Action Controls (< lg screens) */}
         <div className="flex lg:hidden items-center space-x-1.5">

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { WardRisk, ValidationEvent, SensorNode } from '../types';
-import { Layers, Eye, Mountain } from 'lucide-react';
+import { Layers, Eye, Mountain, Zap } from 'lucide-react';
 
 interface MapProps {
   wards: WardRisk[];
@@ -264,7 +264,7 @@ export const MapChoropleth: React.FC<MapProps> = ({
           <p class="text-slate-200 mt-1.5 leading-relaxed">${ev.description}</p>
           <div class="mt-2.5 pt-2 border-t border-slate-700/80 font-mono text-[11px] flex justify-between items-center">
             <span>24h Rain: <strong class="text-white">${ev.rainfall_24h_mm} mm</strong></span>
-            <span class="text-emerald-400 font-bold">✓ Model Alert Verified</span>
+            <span class="text-emerald-400 font-bold flex items-center gap-1"><svg class="w-3 h-3 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Model Alert Verified</span>
           </div>
           <div class="text-[10px] text-slate-400 mt-1 italic">Source: ${ev.documented_source}</div>
         </div>`,
@@ -292,7 +292,7 @@ export const MapChoropleth: React.FC<MapProps> = ({
           <div class="relative flex items-center justify-center">
             <div class="absolute w-8 h-8 rounded-full ${isSurge ? 'bg-red-500/40 animate-ping' : 'bg-cyan-500/30 animate-pulse'}"></div>
             <div class="w-6 h-6 rounded-full ${isSurge ? 'bg-red-600 border-red-300 shadow-[0_0_12px_#ef4444]' : 'bg-cyan-600 border-cyan-300 shadow-[0_0_12px_#06b6d4]'} border-2 flex items-center justify-center text-white text-[10px] font-black z-10">
-              ⚡
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             </div>
             <div class="absolute -bottom-4 bg-slate-900/90 border border-slate-700 px-1.5 py-0.2 rounded text-[9px] font-mono text-white whitespace-nowrap shadow">
               ${node.water_level_cm.toFixed(0)}cm
@@ -429,9 +429,17 @@ export const MapChoropleth: React.FC<MapProps> = ({
   }, [selectedWard?.ward_id]);
 
   return (
-    <div className="relative w-full h-[580px] rounded overflow-hidden border border-[#2d3744] bg-[#161b22]">
+    <div className="relative w-full h-[580px] rounded-2xl overflow-hidden border border-slate-200/90 bg-white shadow-sm">
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
+
+      {/* Commusoft Top-Left Status Overlay */}
+      <div className="absolute top-3 left-3 z-20 pointer-events-none flex items-center gap-2 bg-white/95 backdrop-blur-md border border-slate-200/80 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 shadow-sm">
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="tracking-wide">Surveillance Stream</span>
+        <span className="text-slate-300">•</span>
+        <span className="text-slate-500 text-[11px] font-mono">DEM 30m</span>
+      </div>
 
       {/* Floating Controls Overlay (Top Right) */}
       <div className="absolute top-3 right-3 z-20 flex flex-col items-end space-y-2 pointer-events-auto">
@@ -439,17 +447,17 @@ export const MapChoropleth: React.FC<MapProps> = ({
         <div
           role="group"
           aria-label="Map Base Layer Switcher"
-          className="bg-[#1c232d] border border-[#2d3744] rounded p-1 flex items-center space-x-1 shadow-md"
+          className="bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-xl p-1 flex items-center space-x-1 shadow-sm"
         >
           <button
             onClick={() => handleLayerSwitch('satellite')}
-            className={`px-2 py-1 rounded text-xs font-mono flex items-center space-x-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
               activeLayer === 'satellite'
-                ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
-                : 'text-slate-300 hover:bg-[#212934]'
+                ? 'bg-[#064244] text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
             aria-label="Switch to Satellite Imagery Layer (ESRI World Imagery)"
-            title="High-Resolution Satellite Imagery (0 API Cost)"
+            title="High-Resolution Satellite Imagery"
           >
             <Eye className="w-3.5 h-3.5" />
             <span>Satellite</span>
@@ -457,13 +465,13 @@ export const MapChoropleth: React.FC<MapProps> = ({
 
           <button
             onClick={() => handleLayerSwitch('dark')}
-            className={`px-2 py-1 rounded text-xs font-mono flex items-center space-x-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
               activeLayer === 'dark'
-                ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
-                : 'text-slate-300 hover:bg-[#212934]'
+                ? 'bg-[#064244] text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
-            aria-label="Switch to Tactical Dark Map Layer"
-            title="Tactical Dark Canvas (0 API Cost)"
+            aria-label="Switch to Dark Map Layer"
+            title="Dark Canvas"
           >
             <Layers className="w-3.5 h-3.5" />
             <span>Dark</span>
@@ -471,13 +479,13 @@ export const MapChoropleth: React.FC<MapProps> = ({
 
           <button
             onClick={() => handleLayerSwitch('topo')}
-            className={`px-2 py-1 rounded text-xs font-mono flex items-center space-x-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
               activeLayer === 'topo'
-                ? 'bg-[#0284c7] text-white font-bold border border-[#0284c7]'
-                : 'text-slate-300 hover:bg-[#212934]'
+                ? 'bg-[#064244] text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
             aria-label="Switch to Topographic Contours Map Layer (OpenTopoMap)"
-            title="Topographical Contours (0 API Cost)"
+            title="Topographical Contours"
           >
             <Mountain className="w-3.5 h-3.5" />
             <span>Topo</span>
@@ -485,100 +493,114 @@ export const MapChoropleth: React.FC<MapProps> = ({
         </div>
 
         {/* Feature Toggles (Rivers, Sensors, Events) */}
-        <div className="bg-[#1c232d] border border-[#2d3744] rounded p-1.5 flex items-center space-x-3 text-xs font-mono shadow-md flex-wrap gap-y-1">
-          <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
+        <div className="bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-xl p-2 flex items-center space-x-3 text-xs font-medium text-slate-700 shadow-sm flex-wrap gap-y-1">
+          <label className="flex items-center space-x-1.5 cursor-pointer hover:text-slate-900">
             <input
               type="checkbox"
               checked={showRivers}
               onChange={(e) => setShowRivers(e.target.checked)}
-              className="accent-[#0284c7] rounded cursor-pointer"
+              className="accent-[#064244] rounded cursor-pointer"
             />
             <span>Rivers</span>
           </label>
 
-          <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
+          <label className="flex items-center space-x-1.5 cursor-pointer hover:text-slate-900">
             <input
               type="checkbox"
               checked={showSensors}
               onChange={(e) => setShowSensors(e.target.checked)}
-              className="accent-[#0284c7] rounded cursor-pointer"
+              className="accent-[#064244] rounded cursor-pointer"
             />
             <span>IoT Sonar</span>
           </label>
 
-          <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 hover:text-white">
+          <label className="flex items-center space-x-1.5 cursor-pointer hover:text-slate-900">
             <input
               type="checkbox"
               checked={showEvents}
               onChange={(e) => setShowEvents(e.target.checked)}
-              className="accent-[#dc2626] rounded cursor-pointer"
+              className="accent-[#ea580c] rounded cursor-pointer"
             />
             <span>2025 Events</span>
           </label>
         </div>
       </div>
 
-      {/* Floating Legend Overlay (Bottom Left) */}
+      {/* Commusoft Signature Floating Summary & Legend Widget (Bottom Left) */}
       <div className="absolute bottom-3 left-3 z-20 pointer-events-auto">
-        {/* Mobile Toggle Button (<sm) */}
         <button
           onClick={() => setIsMobileLegendOpen(!isMobileLegendOpen)}
-          className="sm:hidden flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#1c232d] border border-[#2d3744] text-slate-300 text-xs font-mono shadow-md min-h-[34px]"
+          className="sm:hidden flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-semibold shadow-sm min-h-[36px]"
           aria-expanded={isMobileLegendOpen}
           aria-label="Toggle Risk Legend"
         >
-          <span>Legend</span>
+          <span>Summary</span>
         </button>
 
-        {/* Legend Card: Always visible on sm+, togglable on <sm */}
         <div
           className={`${
             isMobileLegendOpen ? 'block' : 'hidden sm:block'
-          } mt-2 sm:mt-0 bg-[#1c232d] border border-[#2d3744] rounded p-2.5 text-xs font-mono shadow-lg max-w-[290px] sm:max-w-[310px] animate-fadeIn`}
+          } mt-2 sm:mt-0 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3.5 shadow-md max-w-[320px] text-xs space-y-2.5 text-slate-800 animate-fadeIn`}
           role="complementary"
-          aria-label="Risk classification legend"
+          aria-label="Basin summary and risk classification"
         >
-          <div className="text-[11px] font-bold tracking-wider text-slate-300 uppercase mb-2 flex items-center justify-between">
-            <span>Risk Classification</span>
-            <span className="text-[10px] text-slate-400 uppercase font-mono">{activeLayer} Mode</span>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <span className="font-bold text-slate-900 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Basin Telemetry Overview
+            </span>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              {activeLayer} Mode
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span className="text-slate-300">Normal (&lt;40)</span>
+
+          {/* Floating Metric Cells */}
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-1.5">
+              <div className="text-[10px] text-slate-500 font-semibold uppercase">Total</div>
+              <div className="text-sm font-bold text-slate-900 tabular-nums">{wards.length} Wards</div>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-              <span className="text-slate-300">Advisory (40-60)</span>
+            <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-1.5">
+              <div className="text-[10px] text-amber-700 font-semibold uppercase">Advisory</div>
+              <div className="text-sm font-bold text-amber-800 tabular-nums">
+                {wards.filter(w => w.alert_level === 'ADVISORY').length}
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
-              <span className="text-slate-300">Watch (60-80)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              <span className="text-slate-300 font-bold">Warning (&gt;80)</span>
+            <div className="bg-red-50 border border-red-200/60 rounded-xl p-1.5">
+              <div className="text-[10px] text-red-700 font-semibold uppercase">Critical</div>
+              <div className="text-sm font-bold text-red-800 tabular-nums">
+                {wards.filter(w => w.alert_level === 'WARNING' || w.alert_level === 'WATCH').length}
+              </div>
             </div>
           </div>
 
-          <div className="mt-2 pt-2 border-t border-[#2d3744] space-y-1 text-[10px] text-slate-300">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1 text-[#0284c7] font-semibold">
-                <span>⚡</span> IoT Sonar Gauge
-              </span>
-              <span className="flex items-center gap-1 text-[#dc2626] font-semibold">
-                <span className="w-2 h-2 rounded-full bg-[#dc2626] inline-block animate-ping" /> 2025 Disaster Event
-              </span>
+          {/* Risk Classification Pills */}
+          <div className="pt-1 border-t border-slate-100 space-y-1.5">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-slate-600">Normal (&lt;40)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                <span className="text-slate-600">Advisory (40-60)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-orange-500" />
+                <span className="text-slate-600">Watch (60-80)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-slate-700 font-bold">Warning (&gt;80)</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 pt-1">
-              <span className="flex items-center gap-1 text-[#38bdf8]">
-                <span className="w-3 h-0.5 bg-[#38bdf8] inline-block" /> Beas
+
+            <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+              <span className="flex items-center gap-1 font-medium text-emerald-700">
+                <Zap className="w-3 h-3 text-emerald-600 inline" aria-hidden="true" /> {sensors.length} Sonar Nodes
               </span>
-              <span className="flex items-center gap-1 text-[#a78bfa]">
-                <span className="w-3 h-0.5 bg-[#a78bfa] inline-block" /> Parbati
-              </span>
-              <span className="flex items-center gap-1 text-[#34d399]">
-                <span className="w-3 h-0.5 bg-[#34d399] inline-block" /> Tirthan
+              <span className="flex items-center gap-1 font-medium text-red-600">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block animate-ping" /> Historic Groundtruth
               </span>
             </div>
           </div>

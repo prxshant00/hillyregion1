@@ -12,6 +12,8 @@ class AgentExecutionStep(BaseModel):
     phase: str = Field(..., description="Reasoning phase (THOUGHT, ACTION, OBSERVATION)")
     detail: str = Field(..., description="Narrative reasoning or tool output")
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    duration_ms: Optional[float] = Field(default=None, description="Step execution latency in milliseconds")
+    confidence_score: Optional[float] = Field(default=None, description="Step confidence level from 0.0 to 1.0")
 
 
 class TelemetryQualityAudit(BaseModel):
@@ -61,6 +63,9 @@ class AgentTriagePipelineResult(BaseModel):
     hydrology_dossier: HydrologyDossier
     directive: Optional[EmergencyDirectiveDraft] = None
     human_review_required: bool = False
+    total_duration_ms: Optional[float] = Field(default=None, description="Total wall-clock duration of the triage pipeline in ms")
+    estimated_tokens: Optional[int] = Field(default=None, description="Estimated token budget consumed across thoughts, actions, and directives")
+    agent_latencies_ms: Optional[Dict[str, float]] = Field(default=None, description="Per-agent duration breakdown in milliseconds")
 
 
 class ApproveDirectiveRequest(BaseModel):

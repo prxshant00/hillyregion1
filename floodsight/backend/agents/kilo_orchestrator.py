@@ -84,15 +84,28 @@ class KiloParallelOrchestrator:
         watch_alerts = sum(1 for r in results if r.hydrology_dossier.alert_level == "WATCH")
         staged_directives = sum(1 for r in results if r.human_review_required)
 
+        sentinel_total = sum(r.agent_latencies_ms.get("IngestionSentinel", 0.0) if r.agent_latencies_ms else 0.0 for r in results)
+        reasoner_total = sum(r.agent_latencies_ms.get("HydrologyReasoner", 0.0) if r.agent_latencies_ms else 0.0 for r in results)
+        commander_total = sum(r.agent_latencies_ms.get("DispatchCommander", 0.0) if r.agent_latencies_ms else 0.0 for r in results)
+        total_tokens = sum(r.estimated_tokens or 0 for r in results)
+
         bottleneck_analysis = {
-            "fastest_ward": min(results, key=lambda r: len(r.execution_trace)).ward_name if results else "N/A",
-            "slowest_ward": max(results, key=lambda r: len(r.execution_trace)).ward_name if results else "N/A",
+            "fastest_ward": min(results, key=lambda r: r.total_duration_ms or len(r.execution_trace)).ward_name if results else "N/A",
+            "slowest_ward": max(results, key=lambda r: r.total_duration_ms or len(r.execution_trace)).ward_name if results else "N/A",
+            "wards_per_second": round(len(results) / max(elapsed_ms / 1000.0, 0.001), 2),
             "average_confidence_pct": round(
                 (sum(r.telemetry_audit.confidence_score for r in results) / max(len(results), 1)) * 100.0, 1
             ),
             "concurrency_efficiency_gain": round(
                 (len(results) * 18.0) / max(elapsed_ms, 1.0), 2
-            )
+            ),
+            "agent_latency_breakdown_ms": {
+                "IngestionSentinel": round(sentinel_total / max(len(results), 1), 2),
+                "HydrologyReasoner": round(reasoner_total / max(len(results), 1), 2),
+                "DispatchCommander": round(commander_total / max(len(results), 1), 2),
+            },
+            "total_estimated_tokens": total_tokens,
+            "thread_workers_configured": 16
         }
 
         return KiloOrchestrationResponse(

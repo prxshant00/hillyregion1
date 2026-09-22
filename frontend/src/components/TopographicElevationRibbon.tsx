@@ -158,44 +158,44 @@ export const TopographicElevationRibbon: React.FC<TopographicElevationRibbonProp
   const totalDrop = maxElev - minElev;
 
   return (
-    <div className="tactical-chassis p-4 bg-[#1c232d] border border-[#2d3744] rounded space-y-3.5 text-left">
+    <div className="p-5 bg-white border border-slate-200/90 rounded-2xl space-y-4 text-left shadow-sm">
       {/* Header & River Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2d3744] pb-2.5">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-6 h-6 rounded bg-[#212934] border border-[#2d3744] flex items-center justify-center text-[#0284c7]">
-            <Waves className="w-3.5 h-3.5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-[#064244]">
+            <Waves className="w-4 h-4 text-[#064244]" />
           </div>
           <div>
-            <h3 className="font-display font-bold text-sm text-[#e6edf3] flex items-center gap-2">
+            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
               Topographic Catchment Cross-Section
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#212934] text-slate-300 border border-[#2d3744]">
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                 Gravity Gradient: {maxElev}m &rarr; {minElev}m MSL
               </span>
             </h3>
-            <p className="text-[11px] text-slate-400 font-mono">
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
               Upstream-to-downstream hydraulic surge routing • Click any station to inspect ward
             </p>
           </div>
         </div>
 
         {/* River Basin Switcher */}
-        <div className="flex items-center space-x-1 font-mono text-xs">
+        <div className="flex items-center space-x-1.5 text-xs font-semibold">
           <button
             onClick={() => setActiveRiver('Beas')}
-            className={`px-2.5 py-1 rounded border transition-colors ${
+            className={`px-3.5 py-1.5 rounded-full border transition-all cursor-pointer ${
               activeRiver === 'Beas'
-                ? 'bg-[#212934] border-[#0284c7] text-[#0284c7] font-bold'
-                : 'bg-[#161b22] border-[#2d3744] text-slate-400 hover:text-slate-200'
+                ? 'bg-[#064244] border-[#064244] text-white shadow-sm'
+                : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200/80'
             }`}
           >
             Beas Mainstem (7 Stns)
           </button>
           <button
             onClick={() => setActiveRiver('Parbati')}
-            className={`px-2.5 py-1 rounded border transition-colors ${
+            className={`px-3.5 py-1.5 rounded-full border transition-all cursor-pointer ${
               activeRiver === 'Parbati'
-                ? 'bg-[#212934] border-[#0284c7] text-[#0284c7] font-bold'
-                : 'bg-[#161b22] border-[#2d3744] text-slate-400 hover:text-slate-200'
+                ? 'bg-[#064244] border-[#064244] text-white shadow-sm'
+                : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200/80'
             }`}
           >
             Parbati Gorge (3 Stns)
@@ -203,73 +203,73 @@ export const TopographicElevationRibbon: React.FC<TopographicElevationRibbonProp
         </div>
       </div>
 
-      {/* SVG Hydraulic Cross-Section Diagram */}
-      <div className="relative w-full bg-[#161b22] border border-[#2d3744] rounded p-3 overflow-x-auto">
+      {/* Hydraulic Cross-Section Diagram */}
+      <div className="relative w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto">
         <div className="min-w-[680px]">
           {/* Elevation Scale Bar */}
-          <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-1 px-1">
+          <div className="flex justify-between items-center text-[11px] font-semibold text-slate-400 mb-2 px-1">
             <span>High Glacier Pass ({maxElev}m)</span>
-            <span>Channel Slope: {(totalDrop / (stations[stations.length - 1].distanceKm || 1)).toFixed(1)} m/km</span>
+            <span className="text-slate-500 font-medium">Channel Slope: {(totalDrop / (stations[stations.length - 1].distanceKm || 1)).toFixed(1)} m/km</span>
             <span>Gorge Outlet ({minElev}m)</span>
           </div>
 
           {/* Interactive Profile Line */}
-          <div className="grid grid-cols-7 gap-1 relative pt-2 pb-4">
+          <div className="grid grid-cols-7 gap-2 relative pt-1 pb-3">
             {stations.map((stn, index) => {
               const isSelected = selectedWardId === stn.wardId;
               const dropPercent = Math.round(((maxElev - stn.elevationM) / (totalDrop || 1)) * 100);
 
               const alertColor =
                 stn.alertLevel === 'WARNING'
-                  ? '#dc2626'
+                  ? '#ef4444'
                   : stn.alertLevel === 'WATCH'
                   ? '#ea580c'
                   : stn.alertLevel === 'ADVISORY'
-                  ? '#b45309'
-                  : '#15803d';
+                  ? '#f59e0b'
+                  : '#10b981';
 
               return (
                 <button
                   key={stn.wardId + index}
                   onClick={() => onSelectWard(stn.wardId)}
-                  className={`group relative text-left p-2 rounded transition-colors border ${
+                  className={`group relative text-left p-3 rounded-xl transition-all duration-150 border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064244] ${
                     isSelected
-                      ? 'bg-[#212934] border-[#0284c7] ring-1 ring-[#0284c7]'
-                      : 'bg-[#1c232d] hover:bg-[#212934] border-[#2d3744]'
+                      ? 'bg-teal-50/70 border-2 border-[#064244] ring-2 ring-[#064244]/15 shadow-sm'
+                      : 'bg-white hover:bg-slate-100/80 border-slate-200/90 shadow-sm'
                   }`}
                   aria-label={`Select station ${stn.stationName}`}
                 >
                   {/* Top Station Badge */}
-                  <div className="flex items-center justify-between text-[10px] font-mono mb-1">
-                    <span className="text-slate-400 font-bold">{stn.elevationM}m</span>
+                  <div className="flex items-center justify-between text-[11px] mb-1">
+                    <span className="text-slate-500 font-bold">{stn.elevationM}m</span>
                     <span
-                      className="w-2 h-2 rounded-full"
+                      className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: alertColor }}
                       title={`Alert status: ${stn.alertLevel}`}
                     />
                   </div>
 
                   {/* Station Name */}
-                  <div className="text-xs font-bold text-[#e6edf3] truncate font-sans group-hover:text-[#0284c7] transition-colors">
+                  <div className="text-xs font-bold text-slate-900 truncate group-hover:text-[#064244] transition-colors">
                     {stn.stationName}
                   </div>
 
                   {/* Stage vs Danger */}
-                  <div className="text-[11px] font-mono text-slate-300 mt-1 flex items-baseline justify-between">
+                  <div className="text-[11px] text-slate-600 mt-1 flex items-baseline justify-between font-medium">
                     <span>Stage:</span>
-                    <span className="font-bold text-white">{stn.stageCm} cm</span>
+                    <span className="font-bold text-slate-900">{stn.stageCm} cm</span>
                   </div>
 
                   {/* Surge Velocity & ETA */}
-                  <div className="text-[10px] font-mono text-slate-400 mt-0.5 flex justify-between">
+                  <div className="text-[10px] text-slate-500 mt-0.5 flex justify-between font-medium">
                     <span>{stn.flowVelocityMs} m/s</span>
-                    <span className="text-[#0284c7]">+{stn.etaHours}h ETA</span>
+                    <span className="text-[#064244] font-semibold">+{stn.etaHours}h ETA</span>
                   </div>
 
                   {/* Elevation Drop Graphic Bar */}
-                  <div className="w-full bg-[#161b22] h-1 rounded mt-2 overflow-hidden">
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full mt-2.5 overflow-hidden">
                     <div
-                      className="h-full bg-[#0284c7] opacity-80"
+                      className="h-full bg-[#064244] rounded-full"
                       style={{ width: `${Math.max(15, 100 - dropPercent)}%` }}
                     />
                   </div>
@@ -279,22 +279,22 @@ export const TopographicElevationRibbon: React.FC<TopographicElevationRibbonProp
           </div>
 
           {/* Bottom Telemetry Metrics Strip */}
-          <div className="grid grid-cols-4 gap-2 pt-2 border-t border-[#2d3744] text-xs font-mono">
-            <div className="bg-[#1c232d] p-1.5 rounded border border-[#2d3744]">
-              <span className="text-[10px] text-slate-400 block">TOTAL CHANNEL DROP</span>
-              <span className="font-bold text-[#e6edf3]">{totalDrop} m MSL</span>
+          <div className="grid grid-cols-4 gap-2.5 pt-3 border-t border-slate-200/80 text-xs">
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-sm">
+              <span className="text-[10px] text-slate-400 font-semibold block uppercase">TOTAL CHANNEL DROP</span>
+              <span className="font-bold text-slate-900">{totalDrop} m MSL</span>
             </div>
-            <div className="bg-[#1c232d] p-1.5 rounded border border-[#2d3744]">
-              <span className="text-[10px] text-slate-400 block">SURGE VELOCITY (MANNING)</span>
-              <span className="font-bold text-[#0284c7]">4.8 m/s (17.3 km/h)</span>
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-sm">
+              <span className="text-[10px] text-slate-400 font-semibold block uppercase">SURGE VELOCITY (MANNING)</span>
+              <span className="font-bold text-[#064244]">4.8 m/s (17.3 km/h)</span>
             </div>
-            <div className="bg-[#1c232d] p-1.5 rounded border border-[#2d3744]">
-              <span className="text-[10px] text-slate-400 block">CREST ARRIVAL WINDOW</span>
-              <span className="font-bold text-[#b45309]">1h 42m Downstream</span>
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-sm">
+              <span className="text-[10px] text-slate-400 font-semibold block uppercase">CREST ARRIVAL WINDOW</span>
+              <span className="font-bold text-amber-700">1h 42m Downstream</span>
             </div>
-            <div className="bg-[#1c232d] p-1.5 rounded border border-[#2d3744]">
-              <span className="text-[10px] text-slate-400 block">SONAR HARDWARE TELEMETRY</span>
-              <span className="font-bold text-[#15803d]">5 Nodes Synchronized</span>
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-sm">
+              <span className="text-[10px] text-slate-400 font-semibold block uppercase">SONAR HARDWARE TELEMETRY</span>
+              <span className="font-bold text-emerald-700">5 Nodes Synchronized</span>
             </div>
           </div>
         </div>

@@ -63,36 +63,36 @@ export const DigitalTwinControls: React.FC<DigitalTwinControlsProps> = ({
   };
 
   return (
-    <div className="bg-tactical-surface border-2 border-cyan-500/40 rounded-xl p-4 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-3.5">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-4 text-slate-800">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-tactical-border pb-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
-            <Clock className="w-4 h-4 animate-spin-slow" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-[#064244]">
+            <Clock className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                 4D Hydrological Digital Twin Time-Lapse
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                   PHYSICAL TIMELINE
                 </span>
               </h3>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono">
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
               Synchronized simulation of cloudburst development, soil infiltration, and Beas river floodwave crest
             </p>
           </div>
         </div>
 
         {/* Playback Controls Toolbar */}
-        <div className="flex items-center space-x-2 font-mono text-xs">
+        <div className="flex items-center space-x-2 text-xs font-semibold">
           <button
             onClick={togglePlay}
-            className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl flex items-center space-x-1.5 font-semibold transition-all cursor-pointer ${
               isPlaying
-                ? 'bg-amber-500 text-slate-950 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
-                : 'bg-cyan-500 text-slate-950 hover:bg-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'bg-[#064244] hover:bg-[#032e30] text-white shadow-sm'
             }`}
           >
             {isPlaying ? (
@@ -110,7 +110,7 @@ export const DigitalTwinControls: React.FC<DigitalTwinControlsProps> = ({
 
           <button
             onClick={handleSpeedCycle}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 flex items-center space-x-1 transition-all"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 flex items-center space-x-1 transition-all cursor-pointer"
             title="Cycle Playback Speed"
           >
             <FastForward className="w-3.5 h-3.5" />
@@ -120,10 +120,10 @@ export const DigitalTwinControls: React.FC<DigitalTwinControlsProps> = ({
           {isSimulating && (
             <button
               onClick={handleReset}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center space-x-1 transition-all"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 flex items-center space-x-1 transition-all cursor-pointer"
               title="Reset to Real-Time Live Feeds"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+              <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
               <span className="hidden sm:inline">Reset to Live</span>
             </button>
           )}
@@ -132,22 +132,22 @@ export const DigitalTwinControls: React.FC<DigitalTwinControlsProps> = ({
 
       {/* Timeline Scrubber Milestones */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1">
+        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 px-1">
           {DIGITAL_TWIN_STEPS.map((step, idx) => (
             <button
               key={step.timeLabel}
               onClick={() => onStepChange(idx)}
-              className={`flex flex-col items-center transition-all ${
+              className={`flex flex-col items-center transition-all cursor-pointer ${
                 idx === currentStepIndex
-                  ? 'text-cyan-400 font-bold scale-110'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'text-[#064244] font-bold scale-110'
+                  : 'text-slate-400 hover:text-slate-600'
               }`}
             >
               <span className="text-[10px] sm:text-xs">{step.timeLabel}</span>
               <span className={`w-2.5 h-2.5 rounded-full mt-1 border transition-all ${
                 idx === currentStepIndex
-                  ? 'bg-cyan-400 border-white shadow-[0_0_8px_#38bdf8]'
-                  : 'bg-slate-800 border-slate-600'
+                  ? 'bg-[#064244] border-white ring-2 ring-[#064244]/25 shadow-sm'
+                  : 'bg-slate-300 border-slate-400'
               }`} />
             </button>
           ))}
@@ -160,57 +160,57 @@ export const DigitalTwinControls: React.FC<DigitalTwinControlsProps> = ({
           max={DIGITAL_TWIN_STEPS.length - 1}
           value={currentStepIndex}
           onChange={(e) => onStepChange(parseInt(e.target.value, 10))}
-          className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg appearance-none"
+          className="w-full accent-[#064244] cursor-pointer h-2 bg-slate-200 rounded-lg appearance-none"
         />
       </div>
 
       {/* Active Phase Banner & Telemetry Gauges */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pt-1">
         {/* Left Phase Description */}
-        <div className="lg:col-span-6 p-3 rounded-lg bg-slate-900/90 border border-tactical-border flex flex-col justify-between">
+        <div className="lg:col-span-6 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-[10px] uppercase font-mono">Current Simulation Phase</span>
-            <span className={`px-2 py-0.5 rounded text-[10px] font-mono border font-bold ${getIntensityBadge(activeStep.stormIntensity)}`}>
+            <span className="text-slate-500 text-[10px] uppercase font-semibold">Current Simulation Phase</span>
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getIntensityBadge(activeStep.stormIntensity)}`}>
               {activeStep.phase}
             </span>
           </div>
-          <p className="text-slate-200 text-xs mt-1.5 leading-relaxed font-sans">
+          <p className="text-slate-700 text-xs mt-1.5 leading-relaxed font-sans font-medium">
             {activeStep.description}
           </p>
         </div>
 
         {/* Right 4 Hydrological Gauges */}
-        <div className="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
-          <div className="p-2 rounded bg-slate-900/90 border border-slate-800">
-            <span className="text-[10px] text-slate-400 block flex items-center gap-1">
-              <Droplets className="w-3 h-3 text-cyan-400" /> 24h RAIN
+        <div className="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] text-slate-500 font-semibold block flex items-center gap-1">
+              <Droplets className="w-3 h-3 text-[#064244]" /> 24h RAIN
             </span>
-            <strong className="text-white text-sm">{activeStep.rainfallCurrent24h} mm</strong>
+            <strong className="text-slate-900 text-sm">{activeStep.rainfallCurrent24h} mm</strong>
           </div>
 
-          <div className="p-2 rounded bg-slate-900/90 border border-slate-800">
-            <span className="text-[10px] text-slate-400 block flex items-center gap-1">
-              <Mountain className="w-3 h-3 text-amber-400" /> SOIL SAT
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] text-slate-500 font-semibold block flex items-center gap-1">
+              <Mountain className="w-3 h-3 text-amber-600" /> SOIL SAT
             </span>
-            <strong className={`${activeStep.soilMoisturePct > 85 ? 'text-red-400' : 'text-amber-300'} text-sm`}>
+            <strong className={`${activeStep.soilMoisturePct > 85 ? 'text-red-600' : 'text-amber-700'} text-sm`}>
               {activeStep.soilMoisturePct}%
             </strong>
           </div>
 
-          <div className="p-2 rounded bg-slate-900/90 border border-slate-800">
-            <span className="text-[10px] text-slate-400 block flex items-center gap-1">
-              <Waves className="w-3 h-3 text-blue-400" /> RIVER STAGE
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] text-slate-500 font-semibold block flex items-center gap-1">
+              <Waves className="w-3 h-3 text-[#064244]" /> RIVER STAGE
             </span>
-            <strong className={`${activeStep.riverStageCm > 400 ? 'text-red-400' : 'text-cyan-300'} text-sm`}>
+            <strong className={`${activeStep.riverStageCm > 400 ? 'text-red-600' : 'text-[#064244]'} text-sm`}>
               {activeStep.riverStageCm} cm
             </strong>
           </div>
 
-          <div className="p-2 rounded bg-slate-900/90 border border-slate-800">
-            <span className="text-[10px] text-slate-400 block flex items-center gap-1">
-              <ShieldAlert className="w-3 h-3 text-red-400" /> WAVE SPEED
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+            <span className="text-[10px] text-slate-500 font-semibold block flex items-center gap-1">
+              <ShieldAlert className="w-3 h-3 text-red-600" /> WAVE SPEED
             </span>
-            <strong className="text-emerald-300 text-sm">{activeStep.surgeVelocityMs} m/s</strong>
+            <strong className="text-emerald-700 text-sm">{activeStep.surgeVelocityMs} m/s</strong>
           </div>
         </div>
       </div>

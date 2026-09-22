@@ -33,25 +33,32 @@ export const SimulationSandbox: React.FC<SimulationSandboxProps> = ({
   };
 
   return (
-    <div className="bg-tactical-surface border border-tactical-border rounded-xl p-4 shadow-md space-y-4">
-      <div className="flex items-center justify-between border-b border-tactical-border pb-2.5">
-        <div className="flex items-center space-x-2">
-          <Sliders className="w-4 h-4 text-cyan-400" />
-          <h3 className="font-display font-bold text-sm text-white">
-            Hydrological Cloudburst Simulation Sandbox
-          </h3>
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm space-y-4 text-slate-800">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#ea580c]">
+            <Sliders className="w-4 h-4 text-[#ea580c]" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-900">
+              Hydrological Cloudburst Simulation Sandbox
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Interactive What-If parameter stress test across catchment polygons
+            </p>
+          </div>
         </div>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
-          Interactive What-If Engine
+        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+          What-If Engine
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
         {/* 24h Rain Slider */}
-        <div className="space-y-1.5 bg-tactical-card p-3 rounded-lg border border-tactical-border">
-          <div className="flex justify-between text-slate-300">
+        <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+          <div className="flex justify-between text-slate-700 font-medium">
             <span>24h Cloudburst Rainfall:</span>
-            <strong className="text-cyan-400 text-sm">{rain24h} mm</strong>
+            <strong className="text-[#ea580c] text-sm font-bold">{rain24h} mm</strong>
           </div>
           <input
             type="range"
@@ -60,21 +67,21 @@ export const SimulationSandbox: React.FC<SimulationSandboxProps> = ({
             step="5"
             value={rain24h}
             onChange={(e) => setRain24h(Number(e.target.value))}
-            className="w-full accent-cyan-400 cursor-pointer"
+            className="w-full accent-[#ea580c] cursor-pointer h-2 bg-slate-200 rounded-lg appearance-none"
             aria-label="Simulated 24-hour rainfall in millimeters"
           />
-          <div className="flex justify-between text-[10px] text-slate-500">
+          <div className="flex justify-between text-[11px] text-slate-500 font-medium">
             <span>0 mm (Dry)</span>
             <span>100 mm (Heavy)</span>
-            <span className="text-red-400 font-bold">250 mm (Extreme Cloudburst)</span>
+            <span className="text-red-600 font-bold">250 mm (Extreme)</span>
           </div>
         </div>
 
         {/* 72h Rain Slider */}
-        <div className="space-y-1.5 bg-tactical-card p-3 rounded-lg border border-tactical-border">
-          <div className="flex justify-between text-slate-300">
+        <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+          <div className="flex justify-between text-slate-700 font-medium">
             <span>72h Antecedent Saturation:</span>
-            <strong className="text-blue-400 text-sm">{rain72h} mm</strong>
+            <strong className="text-[#064244] text-sm font-bold">{rain72h} mm</strong>
           </div>
           <input
             type="range"
@@ -83,30 +90,30 @@ export const SimulationSandbox: React.FC<SimulationSandboxProps> = ({
             step="10"
             value={rain72h}
             onChange={(e) => setRain72h(Number(e.target.value))}
-            className="w-full accent-blue-400 cursor-pointer"
+            className="w-full accent-[#064244] cursor-pointer h-2 bg-slate-200 rounded-lg appearance-none"
             aria-label="Simulated 72-hour antecedent rainfall in millimeters"
           />
-          <div className="flex justify-between text-[10px] text-slate-500">
+          <div className="flex justify-between text-[11px] text-slate-500 font-medium">
             <span>0 mm (Normal)</span>
             <span>150 mm (Saturated)</span>
-            <span className="text-purple-400 font-bold">350 mm (Super-Saturated)</span>
+            <span className="text-[#064244] font-bold">350 mm (Super-Sat)</span>
           </div>
         </div>
       </div>
 
       {/* Preset Buttons & Apply Action */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs font-semibold">
         <div className="flex items-center space-x-2">
           <button
             onClick={handlePresetCloudburst}
-            className="px-2.5 py-1.5 rounded bg-red-950/80 hover:bg-red-900 border border-red-700 text-red-300 flex items-center gap-1 transition-all"
+            className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Zap className="w-3.5 h-3.5" />
             <span>Preset: Cloudburst (195mm)</span>
           </button>
           <button
             onClick={handlePresetDry}
-            className="px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition-all cursor-pointer"
           >
             <span>Preset: Dry Monsoon (10mm)</span>
           </button>
@@ -115,7 +122,7 @@ export const SimulationSandbox: React.FC<SimulationSandboxProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={onReset}
-            className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-600 transition-all cursor-pointer"
             title="Reset Simulation to Live Feeds"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -123,10 +130,10 @@ export const SimulationSandbox: React.FC<SimulationSandboxProps> = ({
           <button
             onClick={handleSimulate}
             disabled={isSimulating}
-            className="px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-black font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.4)] transition-all"
+            className="px-4 py-2 rounded-xl bg-[#ea580c] hover:bg-[#c2410c] active:bg-[#9a3412] text-white font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
           >
             <Zap className="w-3.5 h-3.5" />
-            <span>{isSimulating ? 'Computing Hydro-Model...' : 'Apply Simulation across Map'}</span>
+            <span>{isSimulating ? 'Computing Hydro-Model...' : 'Apply Simulation'}</span>
           </button>
         </div>
       </div>
